@@ -1,0 +1,22 @@
+{
+  "admin": {
+    "title": "Admin Portal",
+    "dashboard": "Dashboard",
+    "configs": "Ethical Configs",
+    "roles": "Role Management",
+    "cultural": "Cultural Settings",
+    "usersAnalytics": "User Analytics",
+    "monitoring": "Monitoring & Logs",
+    "backup": "Backup & Export"
+  },
+  "user": {
+    "title": "User Portal",
+    "settings": "Settings"
+  },
+  "common": {
+    "language": {
+      "en": "English",
+      "es": "Spanish"
+    }
+  }
+}

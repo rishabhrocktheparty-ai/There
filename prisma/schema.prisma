@@ -1,0 +1,347 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  CONFIG_MANAGER
+  VIEWER
+}
+
+enum AuthProvider {
+  PASSWORD
+  GOOGLE
+  APPLE
+  GITHUB
+}
+
+enum RelationshipRoleTemplateType {
+  FATHER
+  MOTHER
+  SIBLING
+  MENTOR
+  CUSTOM
+}
+
+enum EmotionalTone {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  MIXED
+}
+
+enum UsageEventType {
+  MESSAGE
+  LOGIN
+  PROFILE_UPDATE
+  RELATIONSHIP_CREATED
+  CONFIG_CHANGED
+  OTHER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  SYSTEM_EVENT
+}
+
+enum AuditEntityType {
+  USER
+  ADMIN
+  ETHICAL_CONFIG
+  ROLE_TEMPLATE
+  CULTURAL_PARAMETER
+  RELATIONSHIP
+  CONVERSATION_MESSAGE
+  VOICE_PROFILE
+  AVATAR_PROFILE
+  UPLOAD
+  SYSTEM
+}
+
+enum MediaType {
+  AUDIO
+  IMAGE
+  VIDEO
+  OTHER
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  authProvider AuthProvider    @default(PASSWORD)
+  externalId   String?
+  passwordHash String?
+
+  displayName  String?
+  locale       String?
+  timezone     String?
+  preferences  Json?
+
+  adminProfile AdminUser?
+  relationships   Relationship[]   @relation("UserRelationships")
+  counterpartRels Relationship[]   @relation("CounterpartRelationships")
+  voiceProfile    VoiceProfile?
+  avatarProfile   AvatarProfile?
+  uploads         Upload[]
+  usageEvents     UsageEvent[]
+  auditLogs       AuditLog[]       @relation("AuditActor")
+
+  @@index([authProvider, externalId])
+}
+
+model AdminUser {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String    @unique
+  role      AdminRole
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([role])
+}
+
+model EthicalConfig {
+  id            String                 @id @default(cuid())
+  name          String                 @unique
+  description   String?
+  latestVersion Int                    @default(1)
+  isActive      Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  versions      EthicalConfigVersion[]
+  history       ConfigVersionHistory[]
+}
+
+model EthicalConfigVersion {
+  id          String        @id @default(cuid())
+  config      EthicalConfig @relation(fields: [configId], references: [id])
+  configId    String
+  version     Int
+  data        Json
+  createdAt   DateTime      @default(now())
+  createdById String?
+
+  @@unique([configId, version])
+  @@index([configId, version])
+}
+
+model RoleTemplate {
+  id              String                        @id @default(cuid())
+  type            RelationshipRoleTemplateType
+  key             String                        @unique
+  displayName     String
+  description     String?
+  defaultSettings Json?
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+
+  relationships   Relationship[]
+
+  @@index([type])
+}
+
+model CulturalParameter {
+  id          String   @id @default(cuid())
+  regionCode  String
+  cultureKey  String
+  settings    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([regionCode, cultureKey])
+  @@index([regionCode])
+}
+
+model Relationship {
+  id                String        @id @default(cuid())
+  user              User          @relation("UserRelationships", fields: [userId], references: [id])
+  userId            String
+  counterpartUser   User?         @relation("CounterpartRelationships", fields: [counterpartUserId], references: [id])
+  counterpartUserId String?
+
+  roleTemplate      RoleTemplate? @relation(fields: [roleTemplateId], references: [id])
+  roleTemplateId    String?
+
+  title             String?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  isActive          Boolean       @default(true)
+
+  messages          ConversationMessage[]
+  growthMetrics     GrowthMetric[]
+
+  @@index([userId])
+  @@index([counterpartUserId])
+  @@index([roleTemplateId])
+}
+
+model ConversationMessage {
+  id             String         @id @default(cuid())
+  relationship   Relationship   @relation(fields: [relationshipId], references: [id])
+  relationshipId String
+  sender         User?          @relation(fields: [senderId], references: [id])
+  senderId       String?
+
+  content        String
+  emotionalTone  EmotionalTone
+  metadata       Json?
+  createdAt      DateTime       @default(now())
+
+  @@index([relationshipId, createdAt])
+  @@index([emotionalTone])
+}
+
+model GrowthMetric {
+  id             String         @id @default(cuid())
+  relationship   Relationship   @relation(fields: [relationshipId], references: [id])
+  relationshipId String
+
+  bucketDate     DateTime       
+  messagesCount  Int            @default(0)
+  positiveCount  Int            @default(0)
+  neutralCount   Int            @default(0)
+  negativeCount  Int            @default(0)
+  metrics        Json?
+
+  @@unique([relationshipId, bucketDate])
+  @@index([bucketDate])
+}
+
+model VoiceProfile {
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String       @unique
+  settings    Json?
+  sampleUrl   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  samples     VoiceSample[]
+}
+
+model VoiceSample {
+  id            String       @id @default(cuid())
+  voiceProfile  VoiceProfile @relation(fields: [voiceProfileId], references: [id])
+  voiceProfileId String
+  url           String
+  durationMs    Int?
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+
+  @@index([voiceProfileId])
+}
+
+model AvatarProfile {
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String       @unique
+  settings    Json?
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assets      AvatarAsset[]
+}
+
+model AvatarAsset {
+  id             String        @id @default(cuid())
+  avatarProfile  AvatarProfile @relation(fields: [avatarProfileId], references: [id])
+  avatarProfileId String
+  url            String
+  description    String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([avatarProfileId])
+}
+
+model Upload {
+  id           String    @id @default(cuid())
+  user         User?     @relation(fields: [userId], references: [id])
+  userId       String?
+  mediaType    MediaType
+  url          String
+  originalName String?
+  sizeBytes    Int?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([mediaType])
+}
+
+model UsageEvent {
+  id        String         @id @default(cuid())
+  user      User?          @relation(fields: [userId], references: [id])
+  userId    String?
+  type      UsageEventType
+  metadata  Json?
+  createdAt DateTime       @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+}
+
+model SystemMetric {
+  id         String   @id @default(cuid())
+  name       String
+  labels     Json?
+  value      Float
+  capturedAt DateTime @default(now())
+
+  @@index([name, capturedAt])
+}
+
+model AuditLog {
+  id          String          @id @default(cuid())
+  actor       User?           @relation("AuditActor", fields: [actorId], references: [id])
+  actorId     String?
+  action      AuditAction
+  entityType  AuditEntityType
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+}
+
+model BackupSnapshot {
+  id          String   @id @default(cuid())
+  label       String?
+  snapshotType String  
+  locationUrl String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([snapshotType, createdAt])
+}
+
+model ConfigVersionHistory {
+  id          String        @id @default(cuid())
+  config      EthicalConfig @relation(fields: [configId], references: [id])
+  configId    String
+  fromVersion Int
+  toVersion   Int
+  reason      String?
+  changedById String?
+  changedAt   DateTime      @default(now())
+
+  @@index([configId, changedAt])
+}
