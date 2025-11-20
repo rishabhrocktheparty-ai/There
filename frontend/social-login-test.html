@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Login Testing - There</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
+
+        .oauth-buttons {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .oauth-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .oauth-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .oauth-btn .icon {
+            font-size: 1.5rem;
+        }
+
+        .oauth-btn.google { border-left: 4px solid #4285f4; }
+        .oauth-btn.github { border-left: 4px solid #333; }
+        .oauth-btn.apple { border-left: 4px solid #000; }
+
+        .token-method {
+            margin-top: 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow: auto;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .result pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.875rem;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            color: #1976d2;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .dev-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .user-info h4 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .user-info p {
+            margin: 0.25rem 0;
+            font-size: 0.875rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Social Login Testing</h1>
+            <p>Test OAuth flows for Google, Apple, and GitHub</p>
+        </div>
+
+        <div class="card">
+            <div class="info-box">
+                <p><strong>⚠️ Development Mode:</strong> This page uses mock OAuth flows for testing. In production, users will be redirected to actual OAuth providers. The mock consent page allows you to select from pre-defined test users.</p>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('oauth-flow')">OAuth Flow</button>
+                <button class="tab" onclick="switchTab('direct-token')">Direct Token</button>
+            </div>
+
+            <div id="oauth-flow" class="tab-content active">
+                <h2 class="section-title">OAuth Authorization Flow <span class="dev-badge">Mock</span></h2>
+                
+                <p style="color: #666; margin-bottom: 1rem;">
+                    Click a provider button to initiate the OAuth flow. You'll be redirected to a mock consent page where you can select a test user.
+                </p>
+
+                <div class="oauth-buttons">
+                    <button class="oauth-btn google" onclick="startOAuthFlow('google')">
+                        <span class="icon">🔵</span>
+                        <span>Continue with Google</span>
+                    </button>
+                    <button class="oauth-btn github" onclick="startOAuthFlow('github')">
+                        <span class="icon">🐙</span>
+                        <span>Continue with GitHub</span>
+                    </button>
+                    <button class="oauth-btn apple" onclick="startOAuthFlow('apple')">
+                        <span class="icon">🍎</span>
+                        <span>Continue with Apple</span>
+                    </button>
+                </div>
+
+                <div id="oauth-result"></div>
+            </div>
+
+            <div id="direct-token" class="tab-content">
+                <h2 class="section-title">Direct Token Login <span class="dev-badge">API</span></h2>
+                
+                <p style="color: #666; margin-bottom: 1rem;">
+                    For mobile apps or testing: exchange an OAuth access token directly for a JWT token.
+                </p>
+
+                <div class="input-group">
+                    <label>Provider</label>
+                    <select id="tokenProvider" style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                        <option value="google">Google</option>
+                        <option value="github">GitHub</option>
+                        <option value="apple">Apple</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Access Token (use "mock_token_123" for testing)</label>
+                    <input type="text" id="accessToken" placeholder="mock_token_123" value="mock_token_123">
+                </div>
+
+                <button class="btn btn-primary" onclick="directTokenLogin()">Login with Token</button>
+
+                <div id="token-result"></div>
+            </div>
+        </div>
+
+        <div class="card" id="user-session" style="display: none;">
+            <h2 class="section-title">Current Session</h2>
+            <div id="session-info"></div>
+            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 1rem;">Logout</button>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">Test Users Available</h2>
+            
+            <div style="margin-bottom: 1rem;">
+                <h4>Google Users:</h4>
+                <ul style="margin-left: 1.5rem; color: #666;">
+                    <li>testuser@gmail.com (Test User)</li>
+                    <li>john.doe@gmail.com (John Doe)</li>
+                    <li>jane.smith@gmail.com (Jane Smith)</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <h4>GitHub Users:</h4>
+                <ul style="margin-left: 1.5rem; color: #666;">
+                    <li>testdev (Test Developer)</li>
+                    <li>johndoe (John Doe)</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4>Apple Users:</h4>
+                <ul style="margin-left: 1.5rem; color: #666;">
+                    <li>testuser@privaterelay.appleid.com (Test User)</li>
+                    <li>john.doe@privaterelay.appleid.com (John Doe)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Check for OAuth callback on page load
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const userId = params.get('userId');
+            const email = params.get('email');
+            const error = params.get('error');
+
+            if (error) {
+                showResult('oauth-result', { error: error }, false);
+            } else if (token) {
+                // Store token
+                localStorage.setItem('auth_token', token);
+                localStorage.setItem('user_id', userId);
+                localStorage.setItem('user_email', email);
+
+                // Show success
+                showResult('oauth-result', {
+                    message: 'OAuth login successful!',
+                    token: token,
+                    userId: userId,
+                    email: email
+                }, true);
+
+                // Update session display
+                updateSessionDisplay();
+
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // Check if already logged in
+            const existingToken = localStorage.getItem('auth_token');
+            if (existingToken) {
+                updateSessionDisplay();
+            }
+        });
+
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function startOAuthFlow(provider) {
+            try {
+                // Get current page URL as redirect URI
+                const redirectUri = window.location.origin + window.location.pathname;
+
+                // Request authorization URL
+                const response = await fetch(`${API_URL}/api/auth/${provider}/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Store state for verification (optional)
+                sessionStorage.setItem('oauth_state', data.state);
+
+                // Redirect to authorization URL
+                window.location.href = data.authUrl;
+            } catch (error) {
+                showResult('oauth-result', { error: error.message }, false);
+            }
+        }
+
+        async function directTokenLogin() {
+            const provider = document.getElementById('tokenProvider').value;
+            const accessToken = document.getElementById('accessToken').value;
+
+            if (!accessToken) {
+                showResult('token-result', { error: 'Access token is required' }, false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/${provider}/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ accessToken }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Login failed');
+                }
+
+                // Store token
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user_id', data.user.id);
+                localStorage.setItem('user_email', data.user.email);
+
+                showResult('token-result', data, true);
+                updateSessionDisplay();
+            } catch (error) {
+                showResult('token-result', { error: error.message }, false);
+            }
+        }
+
+        function showResult(elementId, data, success) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.innerHTML = `
+                <div class="result ${success ? 'success' : 'error'}">
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        function updateSessionDisplay() {
+            const token = localStorage.getItem('auth_token');
+            const userId = localStorage.getItem('user_id');
+            const email = localStorage.getItem('user_email');
+
+            if (token) {
+                document.getElementById('user-session').style.display = 'block';
+                document.getElementById('session-info').innerHTML = `
+                    <div class="user-info">
+                        <h4>Logged In</h4>
+                        <p><strong>User ID:</strong> ${userId}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Token:</strong> ${token.substring(0, 20)}...</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('user-session').style.display = 'none';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_email');
+            
+            document.getElementById('user-session').style.display = 'none';
+            document.getElementById('oauth-result').innerHTML = '';
+            document.getElementById('token-result').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

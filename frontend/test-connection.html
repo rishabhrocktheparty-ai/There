@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    
+    <button onclick="testDirectBackend()">Test Direct Backend (Port 3000)</button>
+    <button onclick="testProxiedBackend()">Test Proxied Backend (via Vite)</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testDirectBackend() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing direct connection to backend...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/health');
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <div class="test-result success">
+                        <h3>✅ Direct Backend Connection: SUCCESS</h3>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="test-result error">
+                        <h3>❌ Direct Backend Connection: FAILED</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure backend is running on port 3000</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testProxiedBackend() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing proxied connection through Vite...</p>';
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <div class="test-result success">
+                        <h3>✅ Proxied Backend Connection: SUCCESS</h3>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p>Vite proxy is correctly forwarding requests to backend</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="test-result error">
+                        <h3>❌ Proxied Backend Connection: FAILED</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Check vite.config.ts proxy settings</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testProxiedBackend, 500);
+        });
+    </script>
+</body>
+</html>

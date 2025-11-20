@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Dashboard - There</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge.healthy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.degraded {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.unhealthy {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-icon.healthy {
+            background: #28a745;
+        }
+
+        .status-icon.degraded {
+            background: #ffc107;
+        }
+
+        .status-icon.unhealthy {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-card .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-card .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .services-section {
+            margin-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #212529;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
+
+        .service-card {
+            background: #fff;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-card.healthy {
+            border-left: 4px solid #28a745;
+        }
+
+        .service-card.degraded {
+            border-left: 4px solid #ffc107;
+        }
+
+        .service-card.unhealthy {
+            border-left: 4px solid #dc3545;
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .service-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .service-message {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .service-details pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            margin-bottom: 1rem;
+        }
+
+        .system-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 System Health Dashboard</h1>
+            <p>Real-time monitoring of backend services</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="controls">
+                <button class="btn btn-primary" onclick="checkHealth()">
+                    🔄 Refresh Status
+                </button>
+                <button class="btn btn-secondary" onclick="clearData()">
+                    🗑️ Clear
+                </button>
+                <div class="auto-refresh">
+                    <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+                    <label for="autoRefresh">Auto-refresh (10s)</label>
+                </div>
+            </div>
+
+            <div id="content">
+                <div class="loading">
+                    <p>Click "Refresh Status" to check system health</p>
+                </div>
+            </div>
+
+            <div class="last-updated" id="lastUpdated"></div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+
+        async function checkHealth() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><p>Checking health status...</p></div>';
+
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+
+                displayHealthData(data);
+                updateLastUpdated();
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Connection Error</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure the backend server is running on http://localhost:3000</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayHealthData(data) {
+            const statusClass = data.status;
+            const statusEmoji = statusClass === 'healthy' ? '✅' : 
+                              statusClass === 'degraded' ? '⚠️' : '❌';
+
+            const html = `
+                <div class="status-badge ${statusClass}">
+                    <div class="status-icon ${statusClass}"></div>
+                    <span>${statusEmoji} System Status: ${data.status.toUpperCase()}</span>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="label">Environment</div>
+                        <div class="value">${data.environment}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Uptime</div>
+                        <div class="value">${formatUptime(data.uptime)}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Version</div>
+                        <div class="value">${data.version}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Timestamp</div>
+                        <div class="value">${new Date(data.timestamp).toLocaleTimeString()}</div>
+                    </div>
+                </div>
+
+                <div class="services-section">
+                    <h2 class="section-title">🔧 Services</h2>
+                    ${renderService('Database', data.services.database)}
+                    ${renderService('Authentication', data.services.authentication)}
+                    ${renderService('API Routes', data.services.api)}
+                    ${data.services.cache ? renderService('Cache (Redis)', data.services.cache) : ''}
+                </div>
+
+                <div class="services-section">
+                    <h2 class="section-title">📊 System Metrics</h2>
+                    <div class="system-metrics">
+                        ${renderMemoryMetric(data.system.memory)}
+                        ${renderCPUMetric(data.system.cpu)}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function renderService(name, service) {
+            const statusEmoji = service.status === 'healthy' ? '✅' : 
+                              service.status === 'degraded' ? '⚠️' : '❌';
+            
+            return `
+                <div class="service-card ${service.status}">
+                    <div class="service-header">
+                        <div class="service-name">${name}</div>
+                        <div class="service-status ${service.status}">
+                            <div class="status-icon ${service.status}"></div>
+                            <span>${statusEmoji} ${service.status}</span>
+                        </div>
+                    </div>
+                    <div class="service-message">${service.message || 'No message'}</div>
+                    ${service.responseTime ? `<div style="color: #6c757d; font-size: 0.875rem;">Response time: ${service.responseTime}ms</div>` : ''}
+                    ${service.details ? `
+                        <div class="service-details">
+                            <strong>Details:</strong>
+                            <pre>${JSON.stringify(service.details, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderMemoryMetric(memory) {
+            const usedMB = (memory.used / 1024 / 1024).toFixed(2);
+            const totalMB = (memory.total / 1024 / 1024).toFixed(2);
+            
+            return `
+                <div class="metric-card">
+                    <div class="metric-label">Memory Usage</div>
+                    <div class="metric-value">${memory.percentage}%</div>
+                    <div style="color: #6c757d; font-size: 0.875rem; margin-top: 0.5rem;">
+                        ${usedMB} MB / ${totalMB} MB
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${memory.percentage}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCPUMetric(cpu) {
+            return `
+                <div class="metric-card">
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-value">${cpu.usage.toFixed(2)}s</div>
+                    <div style="color: #6c757d; font-size: 0.875rem; margin-top: 0.5rem;">
+                        User CPU time
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatUptime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        function clearData() {
+            document.getElementById('content').innerHTML = 
+                '<div class="loading"><p>Click "Refresh Status" to check system health</p></div>';
+            document.getElementById('lastUpdated').textContent = '';
+        }
+
+        function toggleAutoRefresh() {
+            const checkbox = document.getElementById('autoRefresh');
+            
+            if (checkbox.checked) {
+                checkHealth(); // Immediate check
+                autoRefreshInterval = setInterval(checkHealth, 10000); // Every 10 seconds
+            } else {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+
+        // Check health on page load
+        window.addEventListener('load', () => {
+            checkHealth();
+        });
+    </script>
+</body>
+</html>

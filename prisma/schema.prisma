@@ -98,6 +98,7 @@ model User {
   uploads         Upload[]
   usageEvents     UsageEvent[]
   auditLogs       AuditLog[]       @relation("AuditActor")
+  sentMessages    ConversationMessage[]
 
   @@index([authProvider, externalId])
 }

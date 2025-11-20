@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: there-config
+  namespace: there-production
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  DATABASE_URL: "postgresql://postgres:password@there-postgres:5432/there_prod"
+  REDIS_URL: "redis://there-redis:6379"
+  JWT_SECRET: "your-production-jwt-secret-here"
+  CORS_ORIGIN: "https://yourdomain.com"
+  LOG_LEVEL: "info"

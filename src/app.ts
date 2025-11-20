@@ -8,7 +8,9 @@ import path from 'path';
 
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
+import { healthCheck, livenessProbe, readinessProbe } from './controllers/healthController';
 import { authRouter } from './routes/authRoutes';
+import { socialAuthRouter } from './routes/socialAuthRoutes';
 import { adminRouter } from './routes/adminRoutes';
 import { configRouter } from './routes/configRoutes';
 import { roleTemplateRouter } from './routes/roleTemplateRoutes';
@@ -24,10 +26,10 @@ dotenv.config();
 export const createApp = () => {
   const app = express();
 
-  const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+  const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
   app.use(cors({
-    origin: clientOrigin,
+    origin: [clientOrigin, 'http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
   }));
 
@@ -45,11 +47,18 @@ export const createApp = () => {
 
   app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
-  app.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
-  });
+  // Health check endpoints
+  app.get('/health', healthCheck);
+  app.get('/api/health', healthCheck);
+  
+  // Kubernetes-style probes
+  app.get('/healthz', livenessProbe);
+  app.get('/readyz', readinessProbe);
 
+  // Authentication routes
   app.use('/api/auth', authRouter);
+  app.use('/api/auth', socialAuthRouter); // Social OAuth routes
+  
   app.use('/api/admin', adminRouter);
   app.use('/api/configs', configRouter);
   app.use('/api/role-templates', roleTemplateRouter);

@@ -3,7 +3,8 @@
 Node.js/Express backend in TypeScript providing:
 
 - Admin auth with role-based permissions (`super_admin`, `config_manager`, `viewer`)
-- User auth with social providers (Google stub)
+- User auth with password and social providers (Google, Apple, GitHub)
+- Mock OAuth flow for development with test users
 - Ethical configuration management (CRUD + versioning)
 - Role templates (father, mother, sibling, mentor)
 - Cultural parameters (region-specific settings)
@@ -14,6 +15,7 @@ Node.js/Express backend in TypeScript providing:
 - Comprehensive audit logging
 - File uploads for voice samples and avatars
 - Realtime communication via Socket.IO
+- Health check system with monitoring dashboard
 
 ## Setup
 
@@ -31,6 +33,9 @@ Server runs on `http://localhost:4000` by default.
 - `npm run build` – build TypeScript to `dist`
 - `npm start` – run built server
 - `npm test` – run Jest test suite
+- `npm run health:check` – test health check endpoints
+- `npm run db:test` – test database connection
+- `npm run db:seed` – seed database with test data
 
 ## High-Level Architecture
 

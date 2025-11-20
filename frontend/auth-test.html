@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f4f4f4;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .credentials {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .credentials h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .credentials code {
+            background-color: #fff;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication System Test</h1>
+    
+    <div class="credentials">
+        <h3>📝 Test Credentials</h3>
+        <p><strong>Admin:</strong></p>
+        <ul>
+            <li>Email: <code>admin@there.ai</code> | Password: <code>Admin123!</code> (Super Admin)</li>
+            <li>Email: <code>config@there.ai</code> | Password: <code>Admin123!</code> (Config Manager)</li>
+            <li>Email: <code>viewer@there.ai</code> | Password: <code>Admin123!</code> (Viewer)</li>
+        </ul>
+        <p><strong>Users:</strong></p>
+        <ul>
+            <li>Email: <code>user@there.ai</code> | Password: <code>User123!</code></li>
+            <li>Email: <code>john@example.com</code> | Password: <code>User123!</code></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <!-- Admin Login -->
+        <div class="test-section">
+            <h2>👨‍💼 Admin Login</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="adminEmail" value="admin@there.ai">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="adminPassword" value="Admin123!">
+            </div>
+            <button onclick="testAdminLogin()">Login as Admin</button>
+            <div id="adminResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- User Login -->
+        <div class="test-section">
+            <h2>👤 User Login</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="userEmail" value="user@there.ai">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="userPassword" value="User123!">
+            </div>
+            <button onclick="testUserLogin()">Login as User</button>
+            <div id="userResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- User Registration -->
+        <div class="test-section">
+            <h2>✨ User Registration</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="regEmail" value="test@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="regPassword" value="Test123!">
+            </div>
+            <div class="form-group">
+                <label>Display Name:</label>
+                <input type="text" id="regName" value="Test User">
+            </div>
+            <button onclick="testUserRegister()">Register New User</button>
+            <div id="regResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Social Login -->
+        <div class="test-section">
+            <h2>🔗 Social Login</h2>
+            <div class="form-group">
+                <label>Provider:</label>
+                <select id="socialProvider" style="width: 100%; padding: 8px;">
+                    <option value="google">Google</option>
+                    <option value="apple">Apple</option>
+                    <option value="github">GitHub</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="socialEmail" value="social.test@gmail.com">
+            </div>
+            <div class="form-group">
+                <label>Display Name:</label>
+                <input type="text" id="socialName" value="Social Test User">
+            </div>
+            <button onclick="testSocialLogin()">Social Login</button>
+            <div id="socialResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/auth';
+
+        async function testAdminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const resultDiv = document.getElementById('adminResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Login Successful!</h3>
+                        <p><strong>Role:</strong> ${data.user.role}</p>
+                        <p><strong>Email:</strong> ${data.user.email}</p>
+                        <p><strong>Token:</strong></p>
+                        <pre>${data.token.substring(0, 50)}...</pre>
+                    `;
+                    localStorage.setItem('adminToken', data.token);
+                } else {
+                    throw new Error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testUserLogin() {
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const resultDiv = document.getElementById('userResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Login Successful!</h3>
+                        <p><strong>Email:</strong> ${data.user.email}</p>
+                        <p><strong>Display Name:</strong> ${data.user.displayName}</p>
+                        <p><strong>Token:</strong></p>
+                        <pre>${data.token.substring(0, 50)}...</pre>
+                    `;
+                    localStorage.setItem('userToken', data.token);
+                } else {
+                    throw new Error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testUserRegister() {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const displayName = document.getElementById('regName').value;
+            const resultDiv = document.getElementById('regResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, displayName })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Registration Successful!</h3>
+                        <p><strong>Email:</strong> ${data.user.email}</p>
+                        <p><strong>Display Name:</strong> ${data.user.displayName}</p>
+                        <p><strong>User ID:</strong> ${data.user.id}</p>
+                        <p>Account created and logged in!</p>
+                    `;
+                    localStorage.setItem('userToken', data.token);
+                } else {
+                    throw new Error(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+
+        async function testSocialLogin() {
+            const provider = document.getElementById('socialProvider').value;
+            const email = document.getElementById('socialEmail').value;
+            const displayName = document.getElementById('socialName').value;
+            const resultDiv = document.getElementById('socialResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                // Simulate a fake access token (in production, this comes from OAuth provider)
+                const accessToken = `fake-${provider}-token-${Date.now()}`;
+                
+                const response = await fetch(`${API_BASE}/user/social-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        provider, 
+                        accessToken, 
+                        email,
+                        displayName,
+                        externalId: `${provider}-${Math.random().toString(36).substr(2, 9)}`
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Social Login Successful!</h3>
+                        <p><strong>Provider:</strong> ${provider}</p>
+                        <p><strong>Email:</strong> ${data.user.email}</p>
+                        <p><strong>Display Name:</strong> ${data.user.displayName}</p>
+                        <p><strong>User ID:</strong> ${data.user.id}</p>
+                    `;
+                    localStorage.setItem('userToken', data.token);
+                } else {
+                    throw new Error(data.message || 'Social login failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

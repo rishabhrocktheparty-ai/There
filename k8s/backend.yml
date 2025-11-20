@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: there-backend
+  namespace: there-production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: there-backend
+  template:
+    metadata:
+      labels:
+        app: there-backend
+    spec:
+      containers:
+      - name: backend
+        image: your-registry/there-backend:latest
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: there-config
+        - secretRef:
+            name: there-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: there-backend
+  namespace: there-production
+spec:
+  selector:
+    app: there-backend
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
