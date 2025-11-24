@@ -14,13 +14,26 @@ export interface EthicalConfig {
   latestVersion: number;
 }
 
-export type RoleTemplateType = 'father' | 'mother' | 'sibling' | 'mentor';
+export type RoleTemplateType = 
+  | 'father' 
+  | 'mother' 
+  | 'sibling' 
+  | 'mentor' 
+  | 'friend' 
+  | 'coach' 
+  | 'therapist' 
+  | 'teacher' 
+  | 'partner' 
+  | 'grandparent';
 
 export interface RoleTemplate {
   id: string;
   type: RoleTemplateType;
   displayName: string;
   description?: string;
+  avatarUrl?: string;
+  category?: string;
+  tags?: string[];
   defaultSettings: Record<string, unknown>;
 }
 

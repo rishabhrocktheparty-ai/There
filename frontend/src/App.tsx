@@ -11,16 +11,19 @@ import { MonitoringLogsPage } from './pages/admin/MonitoringLogsPage';
 import { BackupExportPage } from './pages/admin/BackupExportPage';
 import { RoleSelectionPage } from './pages/user/RoleSelectionPage';
 import { RelationshipsPage } from './pages/user/RelationshipsPage';
+import { RelationshipActivityPage } from './pages/user/RelationshipActivityPage';
 import { ConversationPage } from './pages/user/ConversationPage';
 import { CustomizationPage } from './pages/user/CustomizationPage';
 import { UsageStatsPage } from './pages/user/UsageStatsPage';
 import { SettingsPage } from './pages/user/SettingsPage';
+import { HealthCheckPage } from './pages/HealthCheckPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/health" element={<HealthCheckPage />} />
 
       <Route
         path="/admin"
@@ -52,6 +55,7 @@ export const App = () => {
         <Route path="roles" element={<RoleSelectionPage />} />
         <Route path="relationships" element={<RelationshipsPage />} />
         <Route path="relationships/:id/chat" element={<ConversationPage />} />
+        <Route path="relationships/:id/activity" element={<RelationshipActivityPage />} />
         <Route path="customization" element={<CustomizationPage />} />
         <Route path="usage" element={<UsageStatsPage />} />
         <Route path="settings" element={<SettingsPage />} />

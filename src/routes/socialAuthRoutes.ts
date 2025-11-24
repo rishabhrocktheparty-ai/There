@@ -373,8 +373,8 @@ router.get('/:provider/mock-consent', async (req: Request, res: Response, next: 
             <div class="profile-label">Select a test user:</div>
             ${profiles.map((profile, index) => {
               const name = provider === 'apple' 
-                ? `${profile.name?.firstName} ${profile.name?.lastName}`
-                : profile.name || profile.login;
+                ? (typeof profile.name === 'object' && profile.name ? `${profile.name.firstName} ${profile.name.lastName}` : profile.email.split('@')[0])
+                : profile.name || (profile as any).login;
               const email = profile.email;
               const id = profile.id;
               
@@ -532,7 +532,7 @@ router.get('/:provider/callback', async (req: Request, res: Response, next: Next
       case 'apple':
         email = profile.email;
         externalId = profile.id;
-        displayName = profile.name ? `${profile.name.firstName} ${profile.name.lastName}` : email.split('@')[0];
+        displayName = profile.name && typeof profile.name === 'object' ? `${profile.name.firstName} ${profile.name.lastName}` : email.split('@')[0];
         break;
       default:
         throw new HttpError(400, 'Unsupported provider');
@@ -653,7 +653,7 @@ router.post('/:provider/token', async (req: Request, res: Response, next: NextFu
       case 'apple':
         email = profileData.email;
         externalId = profileData.id;
-        displayName = profileData.name ? `${profileData.name.firstName} ${profileData.name.lastName}` : email.split('@')[0];
+        displayName = profileData.name && typeof profileData.name === 'object' ? `${profileData.name.firstName} ${profileData.name.lastName}` : email.split('@')[0];
         break;
       default:
         throw new HttpError(400, 'Unsupported provider');
@@ -684,6 +684,102 @@ router.post('/:provider/token', async (req: Request, res: Response, next: NextFu
       });
 
       logger.info(`New user created via ${provider} token: ${email}`);
+    }
+
+    // Generate JWT token
+    const token = generateToken(user.id, user.email, !!user.adminProfile);
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        provider: user.authProvider,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Simplified social login endpoint for frontend
+ * POST /api/auth/user/social-login
+ */
+router.post('/user/social-login', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { provider, accessToken } = req.body;
+
+    if (!provider || !accessToken) {
+      throw new HttpError(400, 'Provider and accessToken required');
+    }
+
+    // In development, accept mock tokens
+    let profileData;
+    
+    if (process.env.NODE_ENV === 'development' && accessToken.startsWith('fake-')) {
+      // Use first profile as default for mock tokens
+      const profiles = MOCK_PROFILES[provider as keyof typeof MOCK_PROFILES];
+      if (!profiles || profiles.length === 0) {
+        throw new HttpError(400, `Unsupported provider: ${provider}`);
+      }
+      profileData = profiles[0];
+    } else {
+      // Production: Verify token with provider and fetch profile
+      profileData = await verifyTokenAndFetchProfile(provider, accessToken);
+    }
+
+    // Extract user info
+    let email: string;
+    let externalId: string;
+    let displayName: string;
+
+    switch (provider) {
+      case 'google':
+        email = profileData.email;
+        externalId = profileData.id;
+        displayName = profileData.name;
+        break;
+      case 'github':
+        email = profileData.email;
+        externalId = profileData.id.toString();
+        displayName = profileData.name || profileData.login;
+        break;
+      case 'apple':
+        email = profileData.email;
+        externalId = profileData.id;
+        displayName = profileData.name && typeof profileData.name === 'object' ? `${profileData.name.firstName} ${profileData.name.lastName}` : email.split('@')[0];
+        break;
+      default:
+        throw new HttpError(400, 'Unsupported provider');
+    }
+
+    // Find or create user
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { externalId, authProvider: provider.toUpperCase() as any },
+          { email },
+        ],
+      },
+      include: { adminProfile: true },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          externalId,
+          displayName,
+          authProvider: provider.toUpperCase() as any,
+          locale: 'en',
+          timezone: 'UTC',
+        },
+        include: { adminProfile: true },
+      });
+
+      logger.info(`New user created via ${provider} (simplified endpoint): ${email}`);
     }
 
     // Generate JWT token

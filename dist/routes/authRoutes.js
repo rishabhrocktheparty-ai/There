@@ -32,4 +32,8 @@ router.post('/user/register', (0, validator_1.validateBody)(registerSchema), aut
 router.post('/user/social-login', (0, validator_1.validateBody)(socialLoginSchema), authController_1.AuthController.socialLogin);
 // Protected routes
 router.get('/me', authMiddleware_1.authenticate, authController_1.AuthController.getCurrentUser);
+router.post('/logout', authMiddleware_1.authenticate, authController_1.AuthController.logout);
+router.post('/refresh', authMiddleware_1.authenticate, authController_1.AuthController.refreshToken);
+router.get('/validate', authMiddleware_1.authenticate, authController_1.AuthController.validateSession);
+router.post('/change-password', authMiddleware_1.authenticate, authController_1.AuthController.changePassword);
 exports.authRouter = router;

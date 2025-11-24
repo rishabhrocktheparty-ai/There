@@ -36,5 +36,9 @@ router.post('/user/social-login', validateBody(socialLoginSchema), AuthControlle
 
 // Protected routes
 router.get('/me', authenticate, AuthController.getCurrentUser);
+router.post('/logout', authenticate, AuthController.logout);
+router.post('/refresh', authenticate, AuthController.refreshToken);
+router.get('/validate', authenticate, AuthController.validateSession);
+router.post('/change-password', authenticate, AuthController.changePassword);
 
 export const authRouter = router;

@@ -9,9 +9,12 @@ const validator_1 = require("../utils/validator");
 const inMemoryStore_1 = require("../services/inMemoryStore");
 const router = (0, express_1.Router)();
 const templateSchema = zod_1.z.object({
-    type: zod_1.z.enum(['father', 'mother', 'sibling', 'mentor']),
+    type: zod_1.z.enum(['father', 'mother', 'sibling', 'mentor', 'friend', 'coach', 'therapist', 'teacher', 'partner', 'grandparent']),
     displayName: zod_1.z.string().min(2),
     description: zod_1.z.string().optional(),
+    avatarUrl: zod_1.z.string().optional(),
+    category: zod_1.z.string().optional(),
+    tags: zod_1.z.array(zod_1.z.string()).optional(),
     defaultSettings: zod_1.z.record(zod_1.z.unknown()),
 });
 router.post('/', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['super_admin', 'config_manager']), (0, validator_1.validateBody)(templateSchema), (req, res) => {

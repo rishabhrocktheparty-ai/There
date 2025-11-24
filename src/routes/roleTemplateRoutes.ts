@@ -8,9 +8,12 @@ import { roleTemplates } from '../services/inMemoryStore';
 const router = Router();
 
 const templateSchema = z.object({
-  type: z.enum(['father', 'mother', 'sibling', 'mentor']),
+  type: z.enum(['father', 'mother', 'sibling', 'mentor', 'friend', 'coach', 'therapist', 'teacher', 'partner', 'grandparent']),
   displayName: z.string().min(2),
   description: z.string().optional(),
+  avatarUrl: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   defaultSettings: z.record(z.unknown()),
 });
 

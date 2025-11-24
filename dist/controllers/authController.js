@@ -37,12 +37,13 @@ class AuthController {
                 throw new errorHandler_1.HttpError(401, 'Invalid credentials');
             }
             // Generate JWT token
-            const token = jsonwebtoken_1.default.sign({
+            const jwtPayload = {
                 id: user.id,
                 email: user.email,
                 role: user.adminProfile.role,
                 isAdmin: true,
-            }, config_1.config.JWT_SECRET, { expiresIn: config_1.config.JWT_EXPIRES_IN });
+            };
+            const token = jsonwebtoken_1.default.sign(jwtPayload, config_1.config.JWT_SECRET, { expiresIn: '24h' });
             logger_1.logger.info(`Admin login successful: ${email} (${user.adminProfile.role})`);
             res.json({
                 token,
@@ -156,8 +157,38 @@ class AuthController {
     // Social login (Google, Apple, GitHub)
     static async socialLogin(req, res, next) {
         try {
-            const { provider, accessToken, email, externalId, displayName } = req.body;
-            logger_1.logger.info(`Social login attempt: ${provider} - ${email || externalId}`);
+            let { provider, accessToken, email, externalId, displayName } = req.body;
+            logger_1.logger.info(`Social login attempt: ${provider} - ${email || externalId || 'token-based'}`);
+            // If only provider and accessToken are provided (development mode)
+            if (provider && accessToken && !email && !externalId) {
+                // Mock profile data for development
+                const mockProfiles = {
+                    google: {
+                        email: 'mockuser@gmail.com',
+                        id: 'mock-google-id-123',
+                        name: 'Mock Google User',
+                    },
+                    github: {
+                        email: 'mockuser@github.com',
+                        id: 'mock-github-id-456',
+                        login: 'mockuser',
+                        name: 'Mock GitHub User',
+                    },
+                    apple: {
+                        email: 'mockuser@icloud.com',
+                        id: 'mock-apple-id-789',
+                        name: { firstName: 'Mock', lastName: 'Apple User' },
+                    },
+                };
+                const profile = mockProfiles[provider];
+                if (profile) {
+                    email = profile.email;
+                    externalId = profile.id;
+                    displayName = profile.name && typeof profile.name === 'object'
+                        ? `${profile.name.firstName} ${profile.name.lastName}`
+                        : profile.name || profile.login || profile.email.split('@')[0];
+                }
+            }
             if (!email && !externalId) {
                 throw new errorHandler_1.HttpError(400, 'Email or external ID required');
             }
@@ -230,29 +261,166 @@ class AuthController {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 include: { adminProfile: true },
-                select: {
-                    id: true,
-                    email: true,
-                    displayName: true,
-                    locale: true,
-                    timezone: true,
-                    preferences: true,
-                    adminProfile: {
-                        select: {
-                            role: true,
-                        },
-                    },
-                },
             });
             if (!user) {
                 throw new errorHandler_1.HttpError(404, 'User not found');
             }
             res.json({
                 user: {
-                    ...user,
+                    id: user.id,
+                    email: user.email,
+                    displayName: user.displayName,
+                    isAdmin: !!user.adminProfile,
+                    role: user.adminProfile?.role,
+                    authProvider: user.authProvider,
+                    createdAt: user.createdAt,
+                },
+            });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    // Logout (token invalidation)
+    static async logout(req, res, next) {
+        try {
+            const userId = req.user?.id;
+            if (userId) {
+                logger_1.logger.info(`User logged out: ${userId}`);
+            }
+            // In production, you might want to:
+            // 1. Add token to blacklist/Redis
+            // 2. Clear any server-side session
+            // 3. Update user's lastLogout timestamp
+            res.json({
+                message: 'Logged out successfully',
+                success: true
+            });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    // Refresh token
+    static async refreshToken(req, res, next) {
+        try {
+            const userId = req.user?.id;
+            const isAdmin = req.user?.isAdmin;
+            if (!userId) {
+                throw new errorHandler_1.HttpError(401, 'Unauthorized');
+            }
+            // Fetch fresh user data
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                include: { adminProfile: true },
+            });
+            if (!user) {
+                throw new errorHandler_1.HttpError(404, 'User not found');
+            }
+            // Generate new JWT token
+            let token;
+            if (isAdmin && user.adminProfile) {
+                const jwtPayload = {
+                    id: user.id,
+                    email: user.email,
+                    role: user.adminProfile.role,
+                    isAdmin: true,
+                };
+                token = jsonwebtoken_1.default.sign(jwtPayload, config_1.config.JWT_SECRET, { expiresIn: '24h' });
+            }
+            else {
+                token = jsonwebtoken_1.default.sign({
+                    id: user.id,
+                    email: user.email,
+                    isAdmin: false,
+                }, config_1.config.JWT_SECRET, { expiresIn: '7d' });
+            }
+            logger_1.logger.info(`Token refreshed for user: ${user.email}`);
+            res.json({
+                token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    displayName: user.displayName,
+                    role: user.adminProfile?.role,
+                },
+            });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    // Validate session/token
+    static async validateSession(req, res, next) {
+        try {
+            const userId = req.user?.id;
+            const isAdmin = req.user?.isAdmin;
+            if (!userId) {
+                throw new errorHandler_1.HttpError(401, 'Unauthorized');
+            }
+            // Verify user still exists and is active
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                include: { adminProfile: true },
+            });
+            if (!user) {
+                throw new errorHandler_1.HttpError(401, 'User no longer exists');
+            }
+            // Check if admin status matches
+            if (isAdmin && !user.adminProfile) {
+                throw new errorHandler_1.HttpError(401, 'Admin privileges revoked');
+            }
+            res.json({
+                valid: true,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    displayName: user.displayName,
                     isAdmin: !!user.adminProfile,
                     role: user.adminProfile?.role,
                 },
+            });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    // Change password
+    static async changePassword(req, res, next) {
+        try {
+            const userId = req.user?.id;
+            const { currentPassword, newPassword } = req.body;
+            if (!userId) {
+                throw new errorHandler_1.HttpError(401, 'Unauthorized');
+            }
+            if (!currentPassword || !newPassword) {
+                throw new errorHandler_1.HttpError(400, 'Current and new password required');
+            }
+            if (newPassword.length < 8) {
+                throw new errorHandler_1.HttpError(400, 'New password must be at least 8 characters');
+            }
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+            });
+            if (!user || !user.passwordHash) {
+                throw new errorHandler_1.HttpError(400, 'Cannot change password for social login accounts');
+            }
+            // Verify current password
+            const isValidPassword = await bcryptjs_1.default.compare(currentPassword, user.passwordHash);
+            if (!isValidPassword) {
+                throw new errorHandler_1.HttpError(401, 'Current password is incorrect');
+            }
+            // Hash new password
+            const newPasswordHash = await bcryptjs_1.default.hash(newPassword, config_1.config.BCRYPT_ROUNDS);
+            // Update password
+            await prisma.user.update({
+                where: { id: userId },
+                data: { passwordHash: newPasswordHash },
+            });
+            logger_1.logger.info(`Password changed for user: ${user.email}`);
+            res.json({
+                message: 'Password changed successfully',
+                success: true,
             });
         }
         catch (err) {

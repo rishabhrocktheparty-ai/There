@@ -1,31 +1,39 @@
 import { Router } from 'express';
-import { z } from 'zod';
-import { v4 as uuid } from 'uuid';
-import { authenticate, AuthedRequest } from '../middleware/authMiddleware';
-import { validateBody } from '../utils/validator';
-import { userRelationships } from '../services/inMemoryStore';
+import { authenticate } from '../middleware/authMiddleware';
+import {
+  getUserRelationships,
+  getRelationshipById,
+  createRelationship,
+  updateRelationship,
+  deleteRelationship,
+  getRelationshipActivity,
+  switchActiveRelationship,
+} from '../controllers/relationshipController';
 
 const router = Router();
 
-const relationshipSchema = z.object({
-  counterpartUserId: z.string(),
-  roleTemplateId: z.string(),
-});
+// All routes require authentication
+router.use(authenticate);
 
-router.post('/', authenticate, validateBody(relationshipSchema), (req: AuthedRequest, res) => {
-  const payload = req.body as z.infer<typeof relationshipSchema>;
-  const rel = {
-    id: uuid(),
-    userId: req.user!.id,
-    ...payload,
-  };
-  userRelationships.push(rel);
-  res.status(201).json(rel);
-});
+// Get all user relationships
+router.get('/', getUserRelationships);
 
-router.get('/', authenticate, (req: AuthedRequest, res) => {
-  const mine = userRelationships.filter((r) => r.userId === req.user!.id);
-  res.json(mine);
-});
+// Create new relationship
+router.post('/', createRelationship);
+
+// Get single relationship
+router.get('/:id', getRelationshipById);
+
+// Update relationship
+router.patch('/:id', updateRelationship);
+
+// Delete relationship
+router.delete('/:id', deleteRelationship);
+
+// Get relationship activity/stats
+router.get('/:id/activity', getRelationshipActivity);
+
+// Switch active relationship
+router.post('/:id/switch', switchActiveRelationship);
 
 export const relationshipRouter = router;
