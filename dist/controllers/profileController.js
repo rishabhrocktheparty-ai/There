@@ -1,11 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updatePrivacySettings = exports.getPrivacySettings = exports.updateNotificationSettings = exports.getNotificationSettings = exports.deleteAccount = exports.exportUserData = exports.getUsageStats = exports.updatePreferences = exports.getPreferences = exports.updateProfile = exports.getProfile = void 0;
 const zod_1 = require("zod");
-const prisma_1 = __importDefault(require("../services/prisma"));
+const prisma_1 = require("../services/prisma");
 const logger_1 = require("../services/logger");
 // Validation schemas
 const updateProfileSchema = zod_1.z.object({
@@ -74,7 +71,7 @@ const getProfile = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        const user = await prisma_1.default.user.findUnique({
+        const user = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: {
                 id: true,
@@ -89,7 +86,7 @@ const getProfile = async (req, res) => {
                 voiceProfile: {
                     select: {
                         id: true,
-                        imageUrl: true,
+                        sampleUrl: true,
                         settings: true,
                     },
                 },
@@ -127,7 +124,7 @@ const updateProfile = async (req, res) => {
             return res.status(400).json({ error: validation.error.errors });
         }
         const { displayName, locale, timezone } = validation.data;
-        const user = await prisma_1.default.user.update({
+        const user = await prisma_1.prisma.user.update({
             where: { id: userId },
             data: {
                 displayName,
@@ -145,7 +142,7 @@ const updateProfile = async (req, res) => {
             },
         });
         // Log audit event
-        await prisma_1.default.auditLog.create({
+        await prisma_1.prisma.auditLog.create({
             data: {
                 actorId: userId,
                 action: 'UPDATE',
@@ -171,7 +168,7 @@ const getPreferences = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        const user = await prisma_1.default.user.findUnique({
+        const user = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: {
                 preferences: true,
@@ -236,7 +233,7 @@ const updatePreferences = async (req, res) => {
             return res.status(400).json({ error: validation.error.errors });
         }
         // Get current preferences
-        const currentUser = await prisma_1.default.user.findUnique({
+        const currentUser = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: { preferences: true },
         });
@@ -262,7 +259,7 @@ const updatePreferences = async (req, res) => {
                 ...(validation.data.accessibility || {}),
             },
         };
-        const user = await prisma_1.default.user.update({
+        const user = await prisma_1.prisma.user.update({
             where: { id: userId },
             data: {
                 preferences: updatedPreferences,
@@ -273,7 +270,7 @@ const updatePreferences = async (req, res) => {
             },
         });
         // Log usage event
-        await prisma_1.default.usageEvent.create({
+        await prisma_1.prisma.usageEvent.create({
             data: {
                 userId,
                 type: 'PROFILE_UPDATE',
@@ -304,18 +301,18 @@ const getUsageStats = async (req, res) => {
         // Get various statistics
         const [totalMessages, totalRelationships, activeRelationships, usageEvents, messagesByTone, recentActivity, relationshipGrowth,] = await Promise.all([
             // Total messages sent
-            prisma_1.default.conversationMessage.count({
+            prisma_1.prisma.conversationMessage.count({
                 where: {
                     senderId: userId,
                     createdAt: { gte: startDate },
                 },
             }),
             // Total relationships
-            prisma_1.default.relationship.count({
+            prisma_1.prisma.relationship.count({
                 where: { userId },
             }),
             // Active relationships (with recent messages)
-            prisma_1.default.relationship.count({
+            prisma_1.prisma.relationship.count({
                 where: {
                     userId,
                     messages: {
@@ -326,7 +323,7 @@ const getUsageStats = async (req, res) => {
                 },
             }),
             // Usage events
-            prisma_1.default.usageEvent.groupBy({
+            prisma_1.prisma.usageEvent.groupBy({
                 by: ['type'],
                 where: {
                     userId,
@@ -335,7 +332,7 @@ const getUsageStats = async (req, res) => {
                 _count: true,
             }),
             // Messages by emotional tone
-            prisma_1.default.conversationMessage.groupBy({
+            prisma_1.prisma.conversationMessage.groupBy({
                 by: ['emotionalTone'],
                 where: {
                     senderId: userId,
@@ -344,7 +341,7 @@ const getUsageStats = async (req, res) => {
                 _count: true,
             }),
             // Recent activity
-            prisma_1.default.usageEvent.findMany({
+            prisma_1.prisma.usageEvent.findMany({
                 where: {
                     userId,
                     createdAt: { gte: startDate },
@@ -359,7 +356,7 @@ const getUsageStats = async (req, res) => {
                 },
             }),
             // Relationship growth metrics
-            prisma_1.default.growthMetric.findMany({
+            prisma_1.prisma.growthMetric.findMany({
                 where: {
                     relationship: {
                         userId,
@@ -427,7 +424,7 @@ const exportUserData = async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
         // Fetch all user data
-        const userData = await prisma_1.default.user.findUnique({
+        const userData = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             include: {
                 relationships: {
@@ -455,7 +452,7 @@ const exportUserData = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         // Log export event
-        await prisma_1.default.auditLog.create({
+        await prisma_1.prisma.auditLog.create({
             data: {
                 actorId: userId,
                 action: 'EXPORT',
@@ -487,7 +484,7 @@ const deleteAccount = async (req, res) => {
         }
         const { confirmEmail } = req.body;
         // Verify email confirmation
-        const user = await prisma_1.default.user.findUnique({
+        const user = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: { email: true },
         });
@@ -495,7 +492,7 @@ const deleteAccount = async (req, res) => {
             return res.status(400).json({ error: 'Email confirmation does not match' });
         }
         // Log deletion before deleting
-        await prisma_1.default.auditLog.create({
+        await prisma_1.prisma.auditLog.create({
             data: {
                 actorId: userId,
                 action: 'DELETE',
@@ -505,7 +502,7 @@ const deleteAccount = async (req, res) => {
             },
         });
         // Delete user and all related data (cascading)
-        await prisma_1.default.user.delete({
+        await prisma_1.prisma.user.delete({
             where: { id: userId },
         });
         res.json({ message: 'Account successfully deleted' });
@@ -525,7 +522,7 @@ const getNotificationSettings = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        const user = await prisma_1.default.user.findUnique({
+        const user = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: { preferences: true },
         });
@@ -559,7 +556,7 @@ const updateNotificationSettings = async (req, res) => {
         if (!validation.success) {
             return res.status(400).json({ error: validation.error.errors });
         }
-        const currentUser = await prisma_1.default.user.findUnique({
+        const currentUser = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: { preferences: true },
         });
@@ -571,7 +568,7 @@ const updateNotificationSettings = async (req, res) => {
                 ...validation.data,
             },
         };
-        await prisma_1.default.user.update({
+        await prisma_1.prisma.user.update({
             where: { id: userId },
             data: { preferences: updatedPreferences },
         });
@@ -592,7 +589,7 @@ const getPrivacySettings = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        const user = await prisma_1.default.user.findUnique({
+        const user = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: { preferences: true },
         });
@@ -624,7 +621,7 @@ const updatePrivacySettings = async (req, res) => {
         if (!validation.success) {
             return res.status(400).json({ error: validation.error.errors });
         }
-        const currentUser = await prisma_1.default.user.findUnique({
+        const currentUser = await prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: { preferences: true },
         });
@@ -636,7 +633,7 @@ const updatePrivacySettings = async (req, res) => {
                 ...validation.data,
             },
         };
-        await prisma_1.default.user.update({
+        await prisma_1.prisma.user.update({
             where: { id: userId },
             data: { preferences: updatedPreferences },
         });

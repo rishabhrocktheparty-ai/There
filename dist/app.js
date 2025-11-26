@@ -26,6 +26,7 @@ const profileRoutes_1 = require("./routes/profileRoutes");
 const analyticsRoutes_1 = require("./routes/analyticsRoutes");
 const uploadRoutes_1 = require("./routes/uploadRoutes");
 const aiRoutes_1 = __importDefault(require("./routes/aiRoutes"));
+const onboardingRoutes_1 = require("./routes/onboardingRoutes");
 dotenv_1.default.config();
 const createApp = () => {
     const app = (0, express_1.default)();
@@ -76,6 +77,7 @@ const createApp = () => {
     app.use('/api/analytics', analyticsRoutes_1.analyticsRouter);
     app.use('/api/uploads', uploadRoutes_1.uploadRouter);
     app.use('/api/ai', aiRoutes_1.default);
+    app.use('/api/onboarding', onboardingRoutes_1.onboardingRouter);
     app.use(notFoundHandler_1.notFoundHandler);
     app.use(errorHandler_1.errorHandler);
     return app;
