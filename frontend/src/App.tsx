@@ -17,6 +17,7 @@ import { ConversationPage } from './pages/user/ConversationPage';
 import { CustomizationPage } from './pages/user/CustomizationPage';
 import { UsageStatsPage } from './pages/user/UsageStatsPage';
 import { SettingsPage } from './pages/user/SettingsPage';
+import { ChatPage } from './pages/user/ChatPage';
 import { HealthCheckPage } from './pages/HealthCheckPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -74,6 +75,8 @@ export const App = () => {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="conversations" element={<RelationshipsPage />} />
         <Route path="conversation/:id" element={<ConversationPage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="chat/:conversationId" element={<ChatPage />} />
         <Route path="role-selection" element={<RoleSelectionPage />} />
         <Route path="ai-insights" element={<UsageStatsPage />} />
         <Route path="analytics" element={<UsageStatsPage />} />
