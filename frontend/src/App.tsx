@@ -9,6 +9,7 @@ import { CulturalSettingsPage } from './pages/admin/CulturalSettingsPage';
 import { UserAnalyticsPage } from './pages/admin/UserAnalyticsPage';
 import { MonitoringLogsPage } from './pages/admin/MonitoringLogsPage';
 import { BackupExportPage } from './pages/admin/BackupExportPage';
+import { DashboardPage } from './pages/user/DashboardPage';
 import { RoleSelectionPage } from './pages/user/RoleSelectionPage';
 import { RelationshipsPage } from './pages/user/RelationshipsPage';
 import { RelationshipActivityPage } from './pages/user/RelationshipActivityPage';
@@ -59,6 +60,25 @@ export const App = () => {
         <Route path="customization" element={<CustomizationPage />} />
         <Route path="usage" element={<UsageStatsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+      </Route>
+
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute>
+            <UserLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="conversations" element={<RelationshipsPage />} />
+        <Route path="conversation/:id" element={<ConversationPage />} />
+        <Route path="role-selection" element={<RoleSelectionPage />} />
+        <Route path="ai-insights" element={<UsageStatsPage />} />
+        <Route path="analytics" element={<UsageStatsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="profile" element={<SettingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
