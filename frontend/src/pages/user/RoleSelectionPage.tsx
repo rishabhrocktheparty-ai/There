@@ -1,134 +1,161 @@
-import { Box, Container, Typography, Grid, CircularProgress, Alert, Fade } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { 
+  Box, 
+  Container, 
+  Typography, 
+  Grid, 
+  TextField,
+  Chip,
+  Alert,
+  Fade,
+  InputAdornment
+} from '@mui/material';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { RoleCard } from '../../components/chat/RoleCard';
+import SearchIcon from '@mui/icons-material/Search';
+import { RoleCard } from '../../components/roles/EnhancedRoleCard';
+import { RolePreviewDialog } from '../../components/roles/RolePreviewDialog';
+import { roleTemplates, roleCategories, filterRoles, RoleTemplate } from '../../data/roleTemplates';
 import { useNotifications } from '../../providers/NotificationProvider';
 
-interface RoleTemplate {
-  id: string;
-  type: string;
-  displayName: string;
-  description?: string;
-  avatarUrl?: string;
-  category?: string;
-  tags?: string[];
-}
-
 export const RoleSelectionPage = () => {
-  const [templates, setTemplates] = useState<RoleTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [previewRole, setPreviewRole] = useState<RoleTemplate | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
 
-  useEffect(() => {
-    loadTemplates();
-  }, []);
+  const filteredRoles = filterRoles(roleTemplates, selectedCategory, searchTerm);
 
-  const loadTemplates = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await axios.get('/api/role-templates');
-      setTemplates(res.data);
-    } catch (err: any) {
-      console.error('Failed to load templates:', err);
-      setError(err.response?.data?.error || 'Failed to load role templates');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const startRelationship = async (templateId: string) => {
-    setCreating(templateId);
-    setError(null);
+  const handleRoleSelect = (roleId: string) => {
+    setSelectedRole(roleId);
+    addNotification({
+      id: `role-${Date.now()}`,
+      message: `Selected ${roleTemplates.find(r => r.id === roleId)?.name} role`,
+      type: 'success',
+    });
     
-    try {
-      const res = await axios.post('/api/relationships', {
-        counterpartUserId: 'ai-companion',
-        roleTemplateId: templateId,
-      });
-      
-      addNotification({
-        id: `rel-${Date.now()}`,
-        message: 'Relationship created successfully!',
-        type: 'success',
-      });
-      
-      // Navigate to the conversation page
-      navigate(`/app/relationships/${res.data.id}/chat`);
-    } catch (err: any) {
-      console.error('Failed to create relationship:', err);
-      setError(err.response?.data?.error || 'Failed to create relationship');
-      addNotification({
-        id: `error-${Date.now()}`,
-        message: 'Failed to create relationship',
-        type: 'error',
-      });
-    } finally {
-      setCreating(null);
-    }
+    // Navigate to dashboard or chat after selection
+    setTimeout(() => {
+      navigate('/user/dashboard');
+    }, 1500);
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
+  const handleLearnMore = (role: RoleTemplate) => {
+    setPreviewRole(role);
+  };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       <Fade in timeout={600}>
         <Box>
-          <Typography variant="h3" gutterBottom fontWeight={700} align="center">
-            Choose Your AI Companion
-          </Typography>
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            align="center"
-            sx={{ mb: 6, maxWidth: 700, mx: 'auto' }}
-          >
-            Select a role that resonates with you. Each AI companion brings unique personality, wisdom, and support.
-          </Typography>
+          {/* Header */}
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography 
+              variant="h3" 
+              gutterBottom 
+              fontWeight={700}
+              sx={{
+                background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Choose Your AI Companion
+            </Typography>
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{ maxWidth: 700, mx: 'auto', mb: 4 }}
+            >
+              Select a role that resonates with you. Each AI companion brings unique personality, wisdom, and support.
+            </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-              {error}
+            {/* Search Bar */}
+            <TextField
+              fullWidth
+              placeholder="Search roles..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ 
+                maxWidth: 500, 
+                mx: 'auto',
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'background.paper',
+                  borderRadius: 3,
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {/* Category Filters */}
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {roleCategories.map((category) => (
+                <Chip
+                  key={category.id}
+                  label={category.label}
+                  onClick={() => setSelectedCategory(category.id)}
+                  color={selectedCategory === category.id ? 'primary' : 'default'}
+                  sx={{ 
+                    fontWeight: selectedCategory === category.id ? 600 : 400,
+                    px: 1,
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          {/* Selection Confirmation */}
+          {selectedRole && (
+            <Alert 
+              severity="success" 
+              sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
+              onClose={() => setSelectedRole(null)}
+            >
+              Great choice! Preparing your AI companion...
             </Alert>
           )}
 
-          {templates.length === 0 ? (
+          {/* Role Grid */}
+          {filteredRoles.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h5" color="text.secondary" gutterBottom>
-                No role templates available
+                No roles found
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Please contact an administrator to set up role templates.
+                Try adjusting your search or filter criteria.
               </Typography>
             </Box>
           ) : (
             <Grid container spacing={3}>
-              {templates.map((template) => (
-                <Grid item xs={12} sm={6} md={4} key={template.id}>
+              {filteredRoles.map((role) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={role.id}>
                   <RoleCard
-                    id={template.id}
-                    type={template.type}
-                    displayName={template.displayName}
-                    description={template.description}
-                    category={template.category}
-                    tags={template.tags}
-                    onSelect={startRelationship}
-                    disabled={creating !== null}
+                    role={role}
+                    selected={selectedRole === role.id}
+                    onSelect={handleRoleSelect}
+                    onLearnMore={handleLearnMore}
                   />
                 </Grid>
               ))}
             </Grid>
           )}
+
+          {/* Preview Dialog */}
+          <RolePreviewDialog
+            role={previewRole}
+            open={!!previewRole}
+            onClose={() => setPreviewRole(null)}
+            onSelect={handleRoleSelect}
+          />
         </Box>
       </Fade>
     </Container>
