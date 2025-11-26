@@ -1,14 +1,18 @@
 import { AppBar, Badge, Box, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { Link as RouterLink, Outlet } from 'react-router-dom';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState, MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotifications } from '../providers/NotificationProvider';
+import { useAuth } from '../providers/AuthProvider';
 
 export const UserLayout = () => {
   const { t, i18n } = useTranslation();
   const { notifications } = useNotifications();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notifAnchorEl, setNotifAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -31,6 +35,11 @@ export const UserLayout = () => {
   const switchLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
     setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
   return (
@@ -63,10 +72,19 @@ export const UserLayout = () => {
             <AccountCircle />
           </IconButton>
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose} keepMounted>
+            <MenuItem disabled>
+              <Typography variant="body2" color="text.secondary">
+                {user?.displayName || user?.email}
+              </Typography>
+            </MenuItem>
             <MenuItem onClick={() => switchLanguage('en')}>{t('common.language.en')}</MenuItem>
             <MenuItem onClick={() => switchLanguage('es')}>{t('common.language.es')}</MenuItem>
             <MenuItem component={RouterLink} to="/app/settings" onClick={handleClose}>
               {t('user.settings')}
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              <LogoutIcon sx={{ mr: 1 }} fontSize="small" />
+              Logout
             </MenuItem>
           </Menu>
         </Toolbar>

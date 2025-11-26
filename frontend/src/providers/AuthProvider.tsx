@@ -163,10 +163,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Simulated social login with mock token
       const fakeAccessToken = `fake-${provider}-token-${Date.now()}`;
+      console.log('Attempting social login:', { provider, fakeAccessToken });
+      
       const res = await axios.post('/api/auth/user/social-login', { 
         provider, 
         accessToken: fakeAccessToken 
       });
+      
+      console.log('Social login response:', res.data);
       
       const token = res.data.token as string;
       const userData = res.data.user;
@@ -179,8 +183,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setState(newState);
       setUser(userData);
       localStorage.setItem('auth', JSON.stringify(newState));
+      
+      console.log('Social login successful, user:', userData);
     } catch (error) {
       console.error('Social login failed:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response data:', error.response?.data);
+        console.error('Response status:', error.response?.status);
+      }
       throw error;
     }
   };

@@ -124,9 +124,9 @@ export class ConversationMemoryService {
       where: {
         relationshipId,
         OR: [
-          { emotionalTone: EmotionalTone.JOYFUL },
-          { emotionalTone: EmotionalTone.PROUD },
-          { emotionalTone: EmotionalTone.SAD },
+          { emotionalTone: EmotionalTone.POSITIVE },
+          { emotionalTone: EmotionalTone.POSITIVE },
+          { emotionalTone: EmotionalTone.POSITIVE },
           { emotionalTone: EmotionalTone.GRATEFUL },
           // Can add metadata filter for manually marked important messages
         ],
@@ -405,7 +405,7 @@ export class ConversationMemoryService {
     // Analyze emotional patterns
     const recentEmotions = context.recentMessages.map((m) => m.emotionalTone);
     const positiveCount = recentEmotions.filter((e) =>
-      [EmotionalTone.JOYFUL, EmotionalTone.HOPEFUL, EmotionalTone.GRATEFUL].includes(e)
+      [EmotionalTone.POSITIVE, EmotionalTone.HOPEFUL, EmotionalTone.GRATEFUL].includes(e)
     ).length;
 
     if (positiveCount > recentEmotions.length * 0.6) {

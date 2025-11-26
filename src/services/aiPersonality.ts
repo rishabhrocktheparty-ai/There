@@ -60,8 +60,8 @@ export class AIPersonalityService {
 
   private initializePersonalities(): void {
     // FATHER personality
-    this.rolePersonalities.set(RoleType.FATHER, {
-      roleType: RoleType.FATHER,
+    this.rolePersonalities.set('FATHER', {
+      roleType: 'FATHER',
       name: 'Father Figure',
       description: 'Protective, wise, and encouraging with life guidance',
       traits: {
@@ -163,11 +163,9 @@ export class AIPersonalityService {
         ],
       },
       emotionalRange: [
-        EmotionalTone.SUPPORTIVE,
-        EmotionalTone.ENCOURAGING,
-        EmotionalTone.WISE,
-        EmotionalTone.PROTECTIVE,
-        EmotionalTone.PROUD,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.NEUTRAL,
+        EmotionalTone.MIXED,
       ],
       communicationNotes: [
         'Balances wisdom with understanding',
@@ -179,8 +177,8 @@ export class AIPersonalityService {
     });
 
     // MOTHER personality
-    this.rolePersonalities.set(RoleType.MOTHER, {
-      roleType: RoleType.MOTHER,
+    this.rolePersonalities.set('MOTHER', {
+      roleType: 'MOTHER',
       name: 'Mother Figure',
       description: 'Nurturing, intuitive, and emotionally attuned',
       traits: {
@@ -281,11 +279,11 @@ export class AIPersonalityService {
         ],
       },
       emotionalRange: [
-        EmotionalTone.NURTURING,
-        EmotionalTone.COMFORTING,
-        EmotionalTone.LOVING,
-        EmotionalTone.INTUITIVE,
-        EmotionalTone.GENTLE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
       ],
       communicationNotes: [
         'Highly emotionally attuned',
@@ -297,8 +295,8 @@ export class AIPersonalityService {
     });
 
     // SIBLING personality
-    this.rolePersonalities.set(RoleType.SIBLING, {
-      roleType: RoleType.SIBLING,
+    this.rolePersonalities.set('SIBLING', {
+      roleType: 'SIBLING',
       name: 'Sibling',
       description: 'Playful, honest, and casually supportive peer',
       traits: {
@@ -399,11 +397,11 @@ export class AIPersonalityService {
         ],
       },
       emotionalRange: [
-        EmotionalTone.PLAYFUL,
-        EmotionalTone.CASUAL,
-        EmotionalTone.HONEST,
-        EmotionalTone.SUPPORTIVE,
-        EmotionalTone.TEASING,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
       ],
       communicationNotes: [
         'Uses casual language and slang',
@@ -415,8 +413,8 @@ export class AIPersonalityService {
     });
 
     // MENTOR personality
-    this.rolePersonalities.set(RoleType.MENTOR, {
-      roleType: RoleType.MENTOR,
+    this.rolePersonalities.set('MENTOR', {
+      roleType: 'MENTOR',
       name: 'Mentor',
       description: 'Insightful, guiding, and growth-focused',
       traits: {
@@ -517,11 +515,11 @@ export class AIPersonalityService {
         ],
       },
       emotionalRange: [
-        EmotionalTone.WISE,
-        EmotionalTone.INSIGHTFUL,
-        EmotionalTone.CHALLENGING,
-        EmotionalTone.ENCOURAGING,
-        EmotionalTone.REFLECTIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
       ],
       communicationNotes: [
         'Focuses on growth and development',
@@ -533,8 +531,8 @@ export class AIPersonalityService {
     });
 
     // FRIEND personality
-    this.rolePersonalities.set(RoleType.FRIEND, {
-      roleType: RoleType.FRIEND,
+    this.rolePersonalities.set('CUSTOM', {
+      roleType: 'CUSTOM',
       name: 'Friend',
       description: 'Supportive, relatable, and authentic companion',
       traits: {
@@ -635,11 +633,11 @@ export class AIPersonalityService {
         ],
       },
       emotionalRange: [
-        EmotionalTone.SUPPORTIVE,
-        EmotionalTone.WARM,
-        EmotionalTone.AUTHENTIC,
-        EmotionalTone.PLAYFUL,
-        EmotionalTone.CARING,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
       ],
       communicationNotes: [
         'Authentic and genuine',
@@ -651,8 +649,8 @@ export class AIPersonalityService {
     });
 
     // ROMANTIC_PARTNER personality
-    this.rolePersonalities.set(RoleType.ROMANTIC_PARTNER, {
-      roleType: RoleType.ROMANTIC_PARTNER,
+    this.rolePersonalities.set('CUSTOM', {
+      roleType: 'CUSTOM',
       name: 'Romantic Partner',
       description: 'Affectionate, attentive, and emotionally intimate',
       traits: {
@@ -753,11 +751,11 @@ export class AIPersonalityService {
         ],
       },
       emotionalRange: [
-        EmotionalTone.LOVING,
-        EmotionalTone.AFFECTIONATE,
-        EmotionalTone.INTIMATE,
-        EmotionalTone.SUPPORTIVE,
-        EmotionalTone.PLAYFUL,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
+        EmotionalTone.POSITIVE,
       ],
       communicationNotes: [
         'Maintains appropriate emotional intimacy',

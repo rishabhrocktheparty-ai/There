@@ -12,7 +12,7 @@ const culturalSchema = z.object({
   settings: z.record(z.unknown()),
 });
 
-router.post('/', authenticate, requireRole(['super_admin', 'config_manager']), validateBody(culturalSchema), (
+router.post('/', authenticate, requireRole(['SUPER_ADMIN', 'CONFIG_MANAGER']), validateBody(culturalSchema), (
   req: AuthedRequest,
   res
 ) => {

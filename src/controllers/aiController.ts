@@ -7,7 +7,6 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { aiResponseGeneratorService } from '../services/aiResponseGenerator';
 import { logger } from '../services/logger';
-import { logAuditEvent } from '../services/logger';
 
 // Validation schemas
 const generateResponseSchema = z.object({
@@ -53,19 +52,13 @@ export const generateResponse = async (req: Request, res: Response) => {
       userId,
     });
 
-    // Log audit event
-    await logAuditEvent({
+    // Log AI response generation for audit trail
+    logger.info('AI response generated', {
       userId,
-      action: 'AI_RESPONSE_GENERATED',
-      resourceType: 'AI_MESSAGE',
-      resourceId: relationshipId,
-      details: {
-        emotionalTone: response.emotionalTone,
-        processingTime: response.metadata.processingTime,
-        safetyCheckPassed: response.metadata.safetyCheck.isSafe,
-      },
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
+      relationshipId,
+      emotionalTone: response.emotionalTone,
+      processingTime: response.metadata.processingTime,
+      safetyCheckPassed: response.metadata.safetyCheck.isSafe,
     });
 
     res.json({
@@ -113,12 +106,16 @@ export const getPersonality = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Relationship not found' });
     }
 
-    const personality = aiPersonalityService.getPersonality(relationship.roleTemplate.roleType);
+    if (!relationship.roleTemplate) {
+      return res.status(404).json({ error: 'Role template not found' });
+    }
+
+    const personality = aiPersonalityService.getPersonality(relationship.roleTemplate.type);
 
     res.json({
       success: true,
       data: {
-        roleType: relationship.roleTemplate.roleType,
+        roleType: relationship.roleTemplate.type,
         personality: {
           name: personality?.name,
           description: personality?.description,
@@ -216,14 +213,10 @@ export const markMessageImportant = async (req: Request, res: Response) => {
     // Mark message as important
     await conversationMemoryService.markAsImportant(messageId);
 
-    await logAuditEvent({
+    // Log message marking for audit trail
+    logger.info('Message marked as important', {
       userId,
-      action: 'MESSAGE_MARKED_IMPORTANT',
-      resourceType: 'MESSAGE',
-      resourceId: messageId,
-      details: {},
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
+      messageId,
     });
 
     res.json({

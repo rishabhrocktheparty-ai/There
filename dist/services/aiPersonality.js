@@ -13,8 +13,8 @@ class AIPersonalityService {
     }
     initializePersonalities() {
         // FATHER personality
-        this.rolePersonalities.set(client_1.RoleType.FATHER, {
-            roleType: client_1.RoleType.FATHER,
+        this.rolePersonalities.set(RoleType.FATHER, {
+            roleType: RoleType.FATHER,
             name: 'Father Figure',
             description: 'Protective, wise, and encouraging with life guidance',
             traits: {
@@ -131,8 +131,8 @@ class AIPersonalityService {
             ],
         });
         // MOTHER personality
-        this.rolePersonalities.set(client_1.RoleType.MOTHER, {
-            roleType: client_1.RoleType.MOTHER,
+        this.rolePersonalities.set(RoleType.MOTHER, {
+            roleType: RoleType.MOTHER,
             name: 'Mother Figure',
             description: 'Nurturing, intuitive, and emotionally attuned',
             traits: {
@@ -248,8 +248,8 @@ class AIPersonalityService {
             ],
         });
         // SIBLING personality
-        this.rolePersonalities.set(client_1.RoleType.SIBLING, {
-            roleType: client_1.RoleType.SIBLING,
+        this.rolePersonalities.set(RoleType.SIBLING, {
+            roleType: RoleType.SIBLING,
             name: 'Sibling',
             description: 'Playful, honest, and casually supportive peer',
             traits: {
@@ -365,8 +365,8 @@ class AIPersonalityService {
             ],
         });
         // MENTOR personality
-        this.rolePersonalities.set(client_1.RoleType.MENTOR, {
-            roleType: client_1.RoleType.MENTOR,
+        this.rolePersonalities.set(RoleType.MENTOR, {
+            roleType: RoleType.MENTOR,
             name: 'Mentor',
             description: 'Insightful, guiding, and growth-focused',
             traits: {
@@ -482,8 +482,8 @@ class AIPersonalityService {
             ],
         });
         // FRIEND personality
-        this.rolePersonalities.set(client_1.RoleType.FRIEND, {
-            roleType: client_1.RoleType.FRIEND,
+        this.rolePersonalities.set(RoleType.FRIEND, {
+            roleType: RoleType.FRIEND,
             name: 'Friend',
             description: 'Supportive, relatable, and authentic companion',
             traits: {
@@ -599,8 +599,8 @@ class AIPersonalityService {
             ],
         });
         // ROMANTIC_PARTNER personality
-        this.rolePersonalities.set(client_1.RoleType.ROMANTIC_PARTNER, {
-            roleType: client_1.RoleType.ROMANTIC_PARTNER,
+        this.rolePersonalities.set(RoleType.ROMANTIC_PARTNER, {
+            roleType: RoleType.ROMANTIC_PARTNER,
             name: 'Romantic Partner',
             description: 'Affectionate, attentive, and emotionally intimate',
             traits: {

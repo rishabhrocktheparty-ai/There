@@ -14,7 +14,7 @@ const createConfigSchema = z.object({
   data: z.record(z.unknown()),
 });
 
-router.post('/', authenticate, requireRole(['super_admin', 'config_manager']), validateBody(createConfigSchema), (
+router.post('/', authenticate, requireRole(['SUPER_ADMIN', 'CONFIG_MANAGER']), validateBody(createConfigSchema), (
   req: AuthedRequest,
   res,
   next
@@ -58,7 +58,7 @@ const updateConfigSchema = z.object({
   data: z.record(z.unknown()),
 });
 
-router.post('/:id/versions', authenticate, requireRole(['super_admin', 'config_manager']), validateBody(updateConfigSchema), (
+router.post('/:id/versions', authenticate, requireRole(['SUPER_ADMIN', 'CONFIG_MANAGER']), validateBody(updateConfigSchema), (
   req: AuthedRequest,
   res,
   next

@@ -10,7 +10,7 @@ router.get('/me', authenticate, (req: AuthedRequest, res) => {
   res.json(req.user);
 });
 
-router.get('/audit-logs', authenticate, requireRole(['super_admin']), (_req: AuthedRequest, res) => {
+router.get('/audit-logs', authenticate, requireRole(['SUPER_ADMIN']), (_req: AuthedRequest, res) => {
   res.json(auditLogs);
 });
 

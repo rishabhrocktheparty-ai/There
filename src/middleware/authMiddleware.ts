@@ -35,8 +35,9 @@ export const requireRole = (roles: AdminRole[]) => {
     if (!req.user) {
       return next(new HttpError(401, 'Unauthorized'));
     }
-    if (!roles.includes(req.user.role)) {
-      return next(new HttpError(403, 'Forbidden'));
+    // Check if user has a role (admins only) and if it's in the allowed list
+    if (!req.user.role || !roles.includes(req.user.role)) {
+      return next(new HttpError(403, 'Forbidden - Admin role required'));
     }
     return next();
   };

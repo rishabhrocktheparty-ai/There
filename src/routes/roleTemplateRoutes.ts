@@ -17,7 +17,7 @@ const templateSchema = z.object({
   defaultSettings: z.record(z.unknown()),
 });
 
-router.post('/', authenticate, requireRole(['super_admin', 'config_manager']), validateBody(templateSchema), (
+router.post('/', authenticate, requireRole(['SUPER_ADMIN', 'CONFIG_MANAGER']), validateBody(templateSchema), (
   req: AuthedRequest,
   res
 ) => {

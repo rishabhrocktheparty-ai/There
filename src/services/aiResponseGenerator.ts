@@ -3,7 +3,7 @@
  * Integrates all AI components to generate contextual, personalized responses
  */
 
-import { RoleType, EmotionalTone } from '@prisma/client';
+import { RelationshipRoleTemplateType, EmotionalTone } from '@prisma/client';
 import { aiPersonalityService } from './aiPersonality';
 import { emotionalIntelligenceService } from './emotionalIntelligence';
 import { conversationMemoryService } from './conversationMemory';
@@ -72,7 +72,7 @@ export class AIResponseGeneratorService {
         const crisisResponse = contentSafetyService.generateCrisisResponse(request.userMessage);
         return {
           content: crisisResponse,
-          emotionalTone: EmotionalTone.SUPPORTIVE,
+          emotionalTone: EmotionalTone.POSITIVE,
           metadata: {
             generationContext: {} as any,
             safetyCheck: userSafetyCheck,
@@ -83,7 +83,10 @@ export class AIResponseGeneratorService {
       }
 
       // 3. Get personality configuration
-      const personality = aiPersonalityService.getPersonality(relationship.roleTemplate.roleType);
+      if (!relationship.roleTemplate) {
+        throw new Error('Role template not found');
+      }
+      const personality = aiPersonalityService.getPersonality(relationship.roleTemplate.type);
       if (!personality) {
         throw new Error('Personality configuration not found');
       }
@@ -128,7 +131,7 @@ export class AIResponseGeneratorService {
         moodState,
         temporalContext,
         emotionalContext.primaryEmotion,
-        relationship.roleTemplate.roleType
+        relationship.roleTemplate.type
       );
 
       // 10. Get cultural adaptation
@@ -136,9 +139,10 @@ export class AIResponseGeneratorService {
         relationship.user.preferences
       );
 
+      const userPrefs = relationship.user.preferences as any;
       const culturalProfile = culturalAdaptationService.detectCulturalProfile(
         userPreferences.language,
-        relationship.user.preferences?.region
+        userPrefs?.region || 'en-US'
       );
 
       const culturalAdaptation = culturalAdaptationService.adaptToCulture(
@@ -168,7 +172,7 @@ export class AIResponseGeneratorService {
       );
 
       const ethicalCheck = contentSafetyService.checkEthicalBoundaries(
-        relationship.roleTemplate.roleType,
+        relationship.roleTemplate.type,
         request.userMessage,
         generatedContent
       );
@@ -250,7 +254,7 @@ export class AIResponseGeneratorService {
     culturalAdaptation: any,
     userPreferences: any,
     userMessage: string
-  ): string {
+  ): Promise<string> {
     let prompt = '';
 
     // Role and personality
@@ -258,7 +262,7 @@ export class AIResponseGeneratorService {
     prompt += `${personality.description}\n\n`;
 
     // Personality traits
-    prompt += aiPersonalityService.getTraitsDescription(personality.roleType);
+    prompt += aiPersonalityService.getTraitsDescription(personality.type);
     prompt += `\n\n`;
 
     // Communication style
@@ -338,43 +342,13 @@ export class AIResponseGeneratorService {
    */
   private generatePlaceholderResponse(tone: EmotionalTone): string {
     const responses: Record<EmotionalTone, string> = {
-      [EmotionalTone.SUPPORTIVE]: "I hear what you're going through, and I want you to know that I'm here for you. It's important to remember that challenges are part of growth, and you have the strength to handle this.",
-      [EmotionalTone.ENCOURAGING]: "You're doing great! I can see the effort you're putting in, and that's what really matters. Keep pushing forward - you've got this!",
-      [EmotionalTone.COMFORTING]: "It's okay to feel this way. Life can be overwhelming sometimes, but you don't have to face it alone. Take a deep breath, and let's work through this together.",
-      [EmotionalTone.JOYFUL]: "That's fantastic news! I'm so happy to hear this! Your positive energy is wonderful, and I hope this momentum continues for you!",
-      [EmotionalTone.WISE]: "Life has a way of teaching us important lessons, sometimes in unexpected ways. What matters most is what we learn from our experiences and how we grow from them.",
-      [EmotionalTone.PLAYFUL]: "Ha! I like your energy! Life's too short to be serious all the time. Let's keep things light and fun while we figure this out together!",
-      [EmotionalTone.CALM]: "Take a moment to breathe. Sometimes the best thing we can do is step back, find our center, and approach things with a clear mind.",
-      [EmotionalTone.WARM]: "It's always good to connect with you. I appreciate you sharing this with me, and I want you to know that I genuinely care about what you're going through.",
-      [EmotionalTone.NURTURING]: "You're doing so well, and I'm proud of you. Remember to take care of yourself too - your wellbeing matters just as much as everything else.",
-      [EmotionalTone.PROUD]: "Look at what you've accomplished! You should be really proud of yourself. This is a testament to your hard work and dedication.",
-      [EmotionalTone.SAD]: "I understand this is difficult. It's okay to feel sad sometimes.",
-      [EmotionalTone.ANXIOUS]: "I can sense your worry. Let's take this one step at a time.",
-      [EmotionalTone.ANGRY]: "I hear your frustration. Your feelings are valid.",
-      [EmotionalTone.CONFUSED]: "It's okay to feel uncertain. Let's explore this together.",
-      [EmotionalTone.HOPEFUL]: "I'm optimistic about this situation. There are good possibilities ahead.",
-      [EmotionalTone.GRATEFUL]: "Thank you for sharing this with me. I appreciate your openness.",
-      [EmotionalTone.CURIOUS]: "That's an interesting question. Let's think about this together.",
-      [EmotionalTone.NEUTRAL]: "I understand. Let's discuss this further.",
-      [EmotionalTone.PROTECTIVE]: "I'm here to support you through this. Your safety and wellbeing come first.",
-      [EmotionalTone.LOVING]: "I care about you deeply and want the best for you.",
-      [EmotionalTone.INTUITIVE]: "Something tells me there's more to this situation. Trust your instincts.",
-      [EmotionalTone.GENTLE]: "Let's take this slowly and carefully. There's no rush.",
-      [EmotionalTone.HONEST]: "I'll be straight with you - here's what I really think.",
-      [EmotionalTone.CASUAL]: "Hey, no worries! Let's just chat about this casually.",
-      [EmotionalTone.TEASING]: "Oh come on, you know I'm just messing with you! But seriously though...",
-      [EmotionalTone.INSIGHTFUL]: "Here's an interesting perspective to consider...",
-      [EmotionalTone.CHALLENGING]: "I'm going to push you a bit here because I believe you're capable of more.",
-      [EmotionalTone.REFLECTIVE]: "Let's take a moment to reflect on what this really means.",
-      [EmotionalTone.AUTHENTIC]: "I want to be real with you about this.",
-      [EmotionalTone.CARING]: "I genuinely care about your wellbeing and want to help.",
-      [EmotionalTone.AFFECTIONATE]: "You mean a lot to me, and I want you to know that.",
-      [EmotionalTone.INTIMATE]: "I feel close to you and value our connection.",
-      [EmotionalTone.UNDERSTANDING]: "I get where you're coming from. I really do.",
-      [EmotionalTone.CLARIFYING]: "Let me help clarify this situation for you.",
+      [EmotionalTone.POSITIVE]: "You're doing great! I can see the effort you're putting in, and that's what really matters. Keep pushing forward - you've got this!",
+      [EmotionalTone.NEUTRAL]: "I hear what you're saying. Let's think through this together and find the best path forward.",
+      [EmotionalTone.NEGATIVE]: "I understand this is difficult. It's okay to feel this way. I'm here for you, and we'll work through this together.",
+      [EmotionalTone.MIXED]: "Life has a way of teaching us important lessons, sometimes in unexpected ways. What matters most is what we learn from our experiences and how we grow from them.",
     };
 
-    return responses[tone] || responses[EmotionalTone.SUPPORTIVE];
+    return responses[tone] || responses[EmotionalTone.POSITIVE];
   }
 
   /**
@@ -383,7 +357,7 @@ export class AIResponseGeneratorService {
   private getFallbackResponse(userEmotion: EmotionalTone): GeneratedResponse {
     return {
       content: "I appreciate you sharing with me. Let's focus on having a positive, supportive conversation. How else can I help you today?",
-      emotionalTone: EmotionalTone.SUPPORTIVE,
+      emotionalTone: EmotionalTone.POSITIVE,
       metadata: {
         generationContext: {} as any,
         safetyCheck: { isSafe: true, violations: [], severity: 'low', recommendations: [] },
