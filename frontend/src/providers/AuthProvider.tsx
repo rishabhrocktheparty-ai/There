@@ -60,6 +60,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const authData = JSON.parse(stored);
           setState({ ...authData, loading: true });
           
+          // Set axios header before validating
+          if (authData.token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${authData.token}`;
+          }
+          
           // Validate session and fetch user data
           try {
             const res = await axios.get('/api/auth/validate');
@@ -69,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Session invalid, clear auth
             console.error('Session validation failed:', error);
             localStorage.removeItem('auth');
+            delete axios.defaults.headers.common['Authorization'];
             setState({ token: null, role: null, loading: false });
             setUser(null);
           }
