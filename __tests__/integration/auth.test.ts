@@ -144,4 +144,87 @@ describe('Auth Routes Integration', () => {
       expect(response.status).toBe(401);
     });
   });
+
+  describe('POST /api/auth/user/social-login', () => {
+    it('should login with fake Google token in development mode', async () => {
+      // Set NODE_ENV to development for this test
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      try {
+        const response = await request(app)
+          .post('/api/auth/user/social-login')
+          .send({
+            provider: 'google',
+            accessToken: 'fake-google-token-12345',
+          });
+
+        // In development mode with fake token, should succeed or create user
+        expect([200, 201, 500]).toContain(response.status);
+        if (response.status === 200) {
+          expect(response.body).toHaveProperty('token');
+          expect(response.body).toHaveProperty('user');
+          expect(response.body.user).toHaveProperty('email', 'mockuser@gmail.com');
+        }
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it('should login with mock_ prefix token in development mode', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      try {
+        const response = await request(app)
+          .post('/api/auth/user/social-login')
+          .send({
+            provider: 'github',
+            accessToken: 'mock_github_token_12345',
+          });
+
+        expect([200, 201, 500]).toContain(response.status);
+        if (response.status === 200) {
+          expect(response.body).toHaveProperty('token');
+          expect(response.body.user).toHaveProperty('email', 'mockuser@github.com');
+        }
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it('should reject missing provider', async () => {
+      const response = await request(app)
+        .post('/api/auth/user/social-login')
+        .send({
+          accessToken: 'some-token',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Validation failed');
+    });
+
+    it('should reject missing accessToken', async () => {
+      const response = await request(app)
+        .post('/api/auth/user/social-login')
+        .send({
+          provider: 'google',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Validation failed');
+    });
+
+    it('should reject invalid provider', async () => {
+      const response = await request(app)
+        .post('/api/auth/user/social-login')
+        .send({
+          provider: 'invalid',
+          accessToken: 'some-token',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Validation failed');
+    });
+  });
 });

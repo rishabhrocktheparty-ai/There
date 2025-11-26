@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
 import { HttpError } from '../middleware/errorHandler';
 import { config } from '../config';
 import { logger } from '../services/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../services/prisma';
 
 interface LoginBody {
   email: string;
@@ -207,38 +205,46 @@ export class AuthController {
   static async socialLogin(req: Request, res: Response, next: NextFunction) {
     try {
       let { provider, accessToken, email, externalId, displayName } = req.body as SocialLoginBody;
+      const isDevelopment = process.env.NODE_ENV === 'development';
 
       logger.info(`Social login attempt: ${provider} - ${email || externalId || 'token-based'}`);
 
-      // If only provider and accessToken are provided (development mode)
-      if (provider && accessToken && !email && !externalId) {
-        // Mock profile data for development
-        const mockProfiles: any = {
-          google: {
-            email: 'mockuser@gmail.com',
-            id: 'mock-google-id-123',
-            name: 'Mock Google User',
-          },
-          github: {
-            email: 'mockuser@github.com',
-            id: 'mock-github-id-456',
-            login: 'mockuser',
-            name: 'Mock GitHub User',
-          },
-          apple: {
-            email: 'mockuser@icloud.com',
-            id: 'mock-apple-id-789',
-            name: { firstName: 'Mock', lastName: 'Apple User' },
-          },
-        };
+      // In development mode, accept mock tokens (starting with 'fake-' or 'mock_')
+      // and use mock profile data when only provider and accessToken are provided
+      if (isDevelopment && provider && accessToken && !email && !externalId) {
+        if (accessToken.startsWith('fake-') || accessToken.startsWith('mock_')) {
+          // Mock profile data for development
+          const mockProfiles: any = {
+            google: {
+              email: 'mockuser@gmail.com',
+              id: 'mock-google-id-123',
+              name: 'Mock Google User',
+            },
+            github: {
+              email: 'mockuser@github.com',
+              id: 'mock-github-id-456',
+              login: 'mockuser',
+              name: 'Mock GitHub User',
+            },
+            apple: {
+              email: 'mockuser@icloud.com',
+              id: 'mock-apple-id-789',
+              name: { firstName: 'Mock', lastName: 'Apple User' },
+            },
+          };
 
-        const profile = mockProfiles[provider];
-        if (profile) {
-          email = profile.email;
-          externalId = profile.id;
-          displayName = profile.name && typeof profile.name === 'object' 
-            ? `${profile.name.firstName} ${profile.name.lastName}` 
-            : profile.name || profile.login || profile.email.split('@')[0];
+          const profile = mockProfiles[provider];
+          if (profile) {
+            email = profile.email;
+            externalId = profile.id;
+            displayName = profile.name && typeof profile.name === 'object' 
+              ? `${profile.name.firstName} ${profile.name.lastName}` 
+              : profile.name || profile.login || profile.email.split('@')[0];
+            
+            logger.info(`Development mode: Using mock profile for ${provider}`);
+          } else {
+            throw new HttpError(400, `Unsupported provider: ${provider}`);
+          }
         }
       }
 
