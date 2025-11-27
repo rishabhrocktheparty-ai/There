@@ -10,6 +10,7 @@ import { conversationMemoryService } from './conversationMemory';
 import { dynamicMoodService } from './dynamicMood';
 import { culturalAdaptationService } from './culturalAdaptation';
 import { contentSafetyService } from './contentSafety';
+import { geminiService } from './geminiService';
 import { prisma } from './prisma';
 import { logger } from './logger';
 
@@ -320,20 +321,35 @@ export class AIResponseGeneratorService {
   }
 
   /**
-   * Call AI model (placeholder - integrate with actual AI service)
+   * Call AI model using Gemini API
    */
   private async callAIModel(prompt: string, tone: EmotionalTone): Promise<string> {
-    // TODO: Integrate with actual AI model (OpenAI, Anthropic, etc.)
-    // For now, return a placeholder response
-
     logger.info('AI Model Call', { promptLength: prompt.length, tone });
 
-    // This is a placeholder - in production, you would:
-    // 1. Call OpenAI API, Anthropic Claude, or your AI service
-    // 2. Include the prompt with proper system instructions
-    // 3. Handle rate limiting and retries
-    // 4. Stream responses if needed
+    // Check if Gemini is available
+    if (geminiService.isAvailable()) {
+      try {
+        const response = await geminiService.generateContent({
+          prompt,
+          temperature: 0.7,
+          maxTokens: 1024,
+        });
 
+        logger.info('Gemini response received', {
+          responseLength: response.content.length,
+          usageMetadata: response.usageMetadata,
+        });
+
+        return response.content;
+      } catch (error) {
+        logger.error('Gemini API call failed, falling back to placeholder', { error });
+        // Fall back to placeholder response if Gemini fails
+        return this.generatePlaceholderResponse(tone);
+      }
+    }
+
+    // Fall back to placeholder response if Gemini is not available
+    logger.warn('Gemini not available, using placeholder response');
     return this.generatePlaceholderResponse(tone);
   }
 

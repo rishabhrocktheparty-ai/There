@@ -12,6 +12,7 @@ const conversationMemory_1 = require("./conversationMemory");
 const dynamicMood_1 = require("./dynamicMood");
 const culturalAdaptation_1 = require("./culturalAdaptation");
 const contentSafety_1 = require("./contentSafety");
+const geminiService_1 = require("./geminiService");
 const prisma_1 = require("./prisma");
 const logger_1 = require("./logger");
 class AIResponseGeneratorService {
@@ -183,17 +184,32 @@ class AIResponseGeneratorService {
         return prompt;
     }
     /**
-     * Call AI model (placeholder - integrate with actual AI service)
+     * Call AI model using Gemini API
      */
     async callAIModel(prompt, tone) {
-        // TODO: Integrate with actual AI model (OpenAI, Anthropic, etc.)
-        // For now, return a placeholder response
         logger_1.logger.info('AI Model Call', { promptLength: prompt.length, tone });
-        // This is a placeholder - in production, you would:
-        // 1. Call OpenAI API, Anthropic Claude, or your AI service
-        // 2. Include the prompt with proper system instructions
-        // 3. Handle rate limiting and retries
-        // 4. Stream responses if needed
+        // Check if Gemini is available
+        if (geminiService_1.geminiService.isAvailable()) {
+            try {
+                const response = await geminiService_1.geminiService.generateContent({
+                    prompt,
+                    temperature: 0.7,
+                    maxTokens: 1024,
+                });
+                logger_1.logger.info('Gemini response received', {
+                    responseLength: response.content.length,
+                    usageMetadata: response.usageMetadata,
+                });
+                return response.content;
+            }
+            catch (error) {
+                logger_1.logger.error('Gemini API call failed, falling back to placeholder', { error });
+                // Fall back to placeholder response if Gemini fails
+                return this.generatePlaceholderResponse(tone);
+            }
+        }
+        // Fall back to placeholder response if Gemini is not available
+        logger_1.logger.warn('Gemini not available, using placeholder response');
         return this.generatePlaceholderResponse(tone);
     }
     /**

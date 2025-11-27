@@ -27,6 +27,7 @@ const envSchema = z.object({
   // External APIs
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
 
   // Monitoring
   SENTRY_DSN: z.string().optional(),
@@ -186,5 +187,19 @@ export const socialAuthConfig = {
   facebook: {
     appId: config.FACEBOOK_APP_ID,
     appSecret: config.FACEBOOK_APP_SECRET,
+  },
+};
+
+// AI configuration
+export const aiConfig = {
+  gemini: {
+    apiKey: config.GEMINI_API_KEY,
+    model: 'gemini-1.5-flash',
+  },
+  openai: {
+    apiKey: config.OPENAI_API_KEY,
+  },
+  anthropic: {
+    apiKey: config.ANTHROPIC_API_KEY,
   },
 };

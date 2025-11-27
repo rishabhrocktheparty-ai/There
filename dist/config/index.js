@@ -2,7 +2,7 @@
 // Environment Configuration Management
 // Centralized configuration for different environments
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.socialAuthConfig = exports.cdnConfig = exports.monitoringConfig = exports.backupConfig = exports.rateLimitConfig = exports.uploadConfig = exports.corsConfig = exports.jwtConfig = exports.cacheConfig = exports.redisConfig = exports.dbConfig = exports.isTest = exports.isProduction = exports.isDevelopment = exports.config = void 0;
+exports.aiConfig = exports.socialAuthConfig = exports.cdnConfig = exports.monitoringConfig = exports.backupConfig = exports.rateLimitConfig = exports.uploadConfig = exports.corsConfig = exports.jwtConfig = exports.cacheConfig = exports.redisConfig = exports.dbConfig = exports.isTest = exports.isProduction = exports.isDevelopment = exports.config = void 0;
 const zod_1 = require("zod");
 // Environment schema validation
 const envSchema = zod_1.z.object({
@@ -23,6 +23,7 @@ const envSchema = zod_1.z.object({
     // External APIs
     OPENAI_API_KEY: zod_1.z.string().optional(),
     ANTHROPIC_API_KEY: zod_1.z.string().optional(),
+    GEMINI_API_KEY: zod_1.z.string().optional(),
     // Monitoring
     SENTRY_DSN: zod_1.z.string().optional(),
     PROMETHEUS_PORT: zod_1.z.string().default('9090').transform(Number),
@@ -158,5 +159,18 @@ exports.socialAuthConfig = {
     facebook: {
         appId: exports.config.FACEBOOK_APP_ID,
         appSecret: exports.config.FACEBOOK_APP_SECRET,
+    },
+};
+// AI configuration
+exports.aiConfig = {
+    gemini: {
+        apiKey: exports.config.GEMINI_API_KEY,
+        model: 'gemini-1.5-flash',
+    },
+    openai: {
+        apiKey: exports.config.OPENAI_API_KEY,
+    },
+    anthropic: {
+        apiKey: exports.config.ANTHROPIC_API_KEY,
     },
 };
