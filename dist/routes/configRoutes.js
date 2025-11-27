@@ -14,7 +14,7 @@ const createConfigSchema = zod_1.z.object({
     description: zod_1.z.string().optional(),
     data: zod_1.z.record(zod_1.z.unknown()),
 });
-router.post('/', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['super_admin', 'config_manager']), (0, validator_1.validateBody)(createConfigSchema), (req, res, next) => {
+router.post('/', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['SUPER_ADMIN', 'CONFIG_MANAGER']), (0, validator_1.validateBody)(createConfigSchema), (req, res, next) => {
     try {
         const { name, description, data } = req.body;
         const id = (0, uuid_1.v4)();
@@ -51,7 +51,7 @@ router.get('/:id/versions', authMiddleware_1.authenticate, (req, res) => {
 const updateConfigSchema = zod_1.z.object({
     data: zod_1.z.record(zod_1.z.unknown()),
 });
-router.post('/:id/versions', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['super_admin', 'config_manager']), (0, validator_1.validateBody)(updateConfigSchema), (req, res, next) => {
+router.post('/:id/versions', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['SUPER_ADMIN', 'CONFIG_MANAGER']), (0, validator_1.validateBody)(updateConfigSchema), (req, res, next) => {
     try {
         const config = inMemoryStore_1.ethicalConfigs.find((c) => c.id === req.params.id);
         if (!config) {
