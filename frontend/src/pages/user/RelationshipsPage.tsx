@@ -3,379 +3,327 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  CardActions,
+  Container,
+  TextField,
+  InputAdornment,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Grid,
-  IconButton,
-  Menu,
-  MenuItem,
   Typography,
-  Avatar,
   LinearProgress,
   Alert,
-  Tooltip,
+  Fade,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Chat as ChatIcon,
-  MoreVert as MoreVertIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Timeline as TimelineIcon,
-  FavoriteBorder as FavoriteIcon,
-  Circle as CircleIcon,
+  Search as SearchIcon,
+  GridView as GridViewIcon,
+  ViewList as ListViewIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
-
-interface Relationship {
-  id: string;
-  title: string;
-  userId: string;
-  roleTemplateId: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  messageCount: number;
-  roleTemplate: {
-    id: string;
-    key: string;
-    type: string;
-    displayName: string;
-    description: string;
-  };
-  lastMessage?: {
-    content: string;
-    createdAt: string;
-    emotionalTone: string;
-  };
-}
-
-const getRoleColor = (type: string) => {
-  const colors: Record<string, string> = {
-    FATHER: '#1976d2',
-    MOTHER: '#9c27b0',
-    SIBLING: '#f57c00',
-    MENTOR: '#388e3c',
-    CUSTOM: '#757575',
-  };
-  return colors[type] || '#757575';
-};
-
-const getRoleAvatar = (type: string) => {
-  const avatars: Record<string, string> = {
-    FATHER: '👨',
-    MOTHER: '👩',
-    SIBLING: '👦',
-    MENTOR: '🧑‍🏫',
-    CUSTOM: '✨',
-  };
-  return avatars[type] || '✨';
-};
-
-const getEmotionColor = (tone: string) => {
-  const colors: Record<string, string> = {
-    POSITIVE: 'success',
-    NEUTRAL: 'default',
-    NEGATIVE: 'error',
-    MIXED: 'warning',
-  };
-  return colors[tone] || 'default';
-};
-
-const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-};
+import { RelationshipCard } from '../../components/relationships/RelationshipCard';
+import { RelationshipDetailDialog } from '../../components/relationships/RelationshipDetailDialog';
+import { RoleSwitcher } from '../../components/relationships/RoleSwitcher';
+import { useRelationships } from '../../providers/RelationshipProvider';
+import { Relationship, RelationshipFilter, RelationshipCustomization } from '../../types/relationship';
 
 export const RelationshipsPage = () => {
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedRelationship, setSelectedRelationship] = useState<Relationship | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const {
+    relationships,
+    loading,
+    switchRelationship,
+    updateRelationship,
+    deleteRelationship: deleteRel,
+  } = useRelationships();
 
-  useEffect(() => {
-    loadRelationships();
-  }, []);
+  const [filter, setFilter] = useState<RelationshipFilter>({
+    status: 'all',
+    sortBy: 'recent',
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedRelationship, setSelectedRelationship] = useState<Relationship | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadRelationships = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await axios.get<Relationship[]>('/api/relationships');
-      setRelationships(response.data);
-    } catch (err) {
-      console.error('Error loading relationships:', err);
-      setError('Failed to load relationships');
-    } finally {
-      setLoading(false);
+  // Filter relationships
+  const filteredRelationships = relationships.filter((rel) => {
+    // Status filter
+    if (filter.status !== 'all' && rel.status !== filter.status) {
+      return false;
+    }
+
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      return (
+        rel.roleName.toLowerCase().includes(search) ||
+        rel.roleType.toLowerCase().includes(search) ||
+        rel.customization.nickname?.toLowerCase().includes(search)
+      );
+    }
+
+    return true;
+  });
+
+  // Sort relationships
+  const sortedRelationships = [...filteredRelationships].sort((a, b) => {
+    switch (filter.sortBy) {
+      case 'recent':
+        return (
+          new Date(b.lastInteractionAt || b.updatedAt).getTime() -
+          new Date(a.lastInteractionAt || a.updatedAt).getTime()
+        );
+      case 'oldest':
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      case 'most-active':
+        return b.stats.totalMessages - a.stats.totalMessages;
+      case 'name':
+        return (a.customization.nickname || a.roleName).localeCompare(
+          b.customization.nickname || b.roleName
+        );
+      default:
+        return 0;
+    }
+  });
+
+  const handleChat = (id: string) => {
+    navigate(`/user/chat/${id}`);
+  };
+
+  const handleViewDetails = (id: string) => {
+    const rel = relationships.find((r) => r.id === id);
+    if (rel) {
+      setSelectedRelationship(rel);
+      setDetailDialogOpen(true);
     }
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, relationship: Relationship) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
-    setSelectedRelationship(relationship);
+  const handleEdit = (id: string) => {
+    handleViewDetails(id);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedRelationship(null);
-  };
-
-  const handleDeleteClick = () => {
-    handleMenuClose();
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedRelationship) return;
-
+  const handleStatusChange = async (
+    id: string,
+    status: 'active' | 'paused' | 'archived'
+  ) => {
     try {
-      await axios.delete(`/api/relationships/${selectedRelationship.id}`);
-      setRelationships((prev) => prev.filter((r) => r.id !== selectedRelationship.id));
-      setDeleteDialogOpen(false);
-      setSelectedRelationship(null);
+      await updateRelationship(id, { status });
     } catch (err) {
-      console.error('Error deleting relationship:', err);
-      setError('Failed to delete relationship');
+      setError('Failed to update relationship status');
     }
   };
 
-  const handleChatClick = async (relationship: Relationship) => {
-    try {
-      // Mark as active/recently accessed
-      await axios.post(`/api/relationships/${relationship.id}/switch`);
-      navigate(`/app/relationships/${relationship.id}/chat`);
-    } catch (err) {
-      console.error('Error switching relationship:', err);
-      // Navigate anyway
-      navigate(`/app/relationships/${relationship.id}/chat`);
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this relationship?')) {
+      try {
+        await deleteRel(id);
+      } catch (err) {
+        setError('Failed to delete relationship');
+      }
     }
   };
 
-  const handleViewActivity = (relationshipId: string) => {
-    handleMenuClose();
-    navigate(`/app/relationships/${relationshipId}/activity`);
+  const handleSaveCustomization = async (
+    id: string,
+    customization: Partial<RelationshipCustomization>
+  ) => {
+    try {
+      await updateRelationship(id, { customization });
+      setDetailDialogOpen(false);
+    } catch (err) {
+      setError('Failed to save customization');
+    }
+  };
+
+  const handleCreateNew = () => {
+    navigate('/user/role-selection');
   };
 
   if (loading) {
     return (
-      <Box>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
         <LinearProgress />
         <Typography align="center" sx={{ mt: 2 }}>
           Loading your relationships...
         </Typography>
-      </Box>
+      </Container>
     );
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          My Relationships
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/app/roles')}
-        >
-          Add Relationship
-        </Button>
-      </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
-      {relationships.length === 0 ? (
-        <Card>
-          <CardContent sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No relationships yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Start by selecting a role to create your first AI relationship
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/app/roles')}
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Fade in timeout={600}>
+        <Box>
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 3,
+                flexWrap: 'wrap',
+                gap: 2,
+              }}
             >
-              Choose a Role
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Grid container spacing={3}>
-          {relationships.map((relationship) => (
-            <Grid item xs={12} sm={6} md={4} key={relationship.id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 6,
-                  },
+              <Typography variant="h4" fontWeight={700}>
+                My Relationships
+              </Typography>
+
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <RoleSwitcher
+                  relationships={relationships.filter((r) => r.status === 'active')}
+                  onSwitch={switchRelationship}
+                  onCreateNew={handleCreateNew}
+                />
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleCreateNew}
+                >
+                  New Relationship
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Search and Filters */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                mb: 2,
+              }}
+            >
+              <TextField
+                placeholder="Search relationships..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="small"
+                sx={{ flex: '1 1 300px' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
                 }}
+              />
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Chip
+                  label="All"
+                  onClick={() => setFilter({ ...filter, status: 'all' })}
+                  color={filter.status === 'all' ? 'primary' : 'default'}
+                />
+                <Chip
+                  label="Active"
+                  onClick={() => setFilter({ ...filter, status: 'active' })}
+                  color={filter.status === 'active' ? 'primary' : 'default'}
+                />
+                <Chip
+                  label="Paused"
+                  onClick={() => setFilter({ ...filter, status: 'paused' })}
+                  color={filter.status === 'paused' ? 'primary' : 'default'}
+                />
+                <Chip
+                  label="Archived"
+                  onClick={() => setFilter({ ...filter, status: 'archived' })}
+                  color={filter.status === 'archived' ? 'primary' : 'default'}
+                />
+              </Box>
+
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(_, value) => value && setViewMode(value)}
+                size="small"
               >
-                <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Box display="flex" alignItems="center" gap={1.5}>
-                      <Avatar
-                        sx={{
-                          bgcolor: getRoleColor(relationship.roleTemplate.type),
-                          width: 56,
-                          height: 56,
-                          fontSize: '2rem',
-                        }}
-                      >
-                        {getRoleAvatar(relationship.roleTemplate.type)}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" component="div">
-                          {relationship.title}
-                        </Typography>
-                        <Chip
-                          label={relationship.roleTemplate.displayName}
-                          size="small"
-                          sx={{
-                            bgcolor: getRoleColor(relationship.roleTemplate.type),
-                            color: 'white',
-                            fontSize: '0.7rem',
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleMenuClick(e, relationship)}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </Box>
+                <ToggleButton value="grid">
+                  <GridViewIcon />
+                </ToggleButton>
+                <ToggleButton value="list">
+                  <ListViewIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+          </Box>
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {relationship.roleTemplate.description}
-                  </Typography>
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
 
-                  <Box display="flex" gap={1} mb={2}>
-                    <Chip
-                      icon={<ChatIcon />}
-                      label={`${relationship.messageCount} messages`}
-                      size="small"
-                      variant="outlined"
-                    />
-                    {relationship.isActive && (
-                      <Chip
-                        icon={<CircleIcon sx={{ fontSize: '0.6rem !important' }} />}
-                        label="Active"
-                        size="small"
-                        color="success"
-                      />
-                    )}
-                  </Box>
-
-                  {relationship.lastMessage && (
-                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Last message: {formatTimeAgo(relationship.lastMessage.createdAt)}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          mt: 0.5,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {relationship.lastMessage.content}
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-
-                <CardActions sx={{ px: 2, pb: 2 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<ChatIcon />}
-                    onClick={() => handleChatClick(relationship)}
-                  >
-                    Chat
-                  </Button>
-                </CardActions>
-              </Card>
+          {/* Relationships Grid/List */}
+          {sortedRelationships.length === 0 ? (
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 8,
+                backgroundColor: 'background.paper',
+                borderRadius: 2,
+              }}
+            >
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {searchTerm || filter.status !== 'all'
+                  ? 'No relationships found'
+                  : 'No relationships yet'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {searchTerm || filter.status !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : 'Start by selecting a role to create your first AI relationship'}
+              </Typography>
+              {!searchTerm && filter.status === 'all' && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleCreateNew}
+                >
+                  Create Your First Relationship
+                </Button>
+              )}
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {sortedRelationships.map((relationship) => (
+                <Grid
+                  item
+                  xs={12}
+                  sm={viewMode === 'grid' ? 6 : 12}
+                  md={viewMode === 'grid' ? 4 : 12}
+                  key={relationship.id}
+                >
+                  <RelationshipCard
+                    relationship={relationship}
+                    onChat={handleChat}
+                    onViewDetails={handleViewDetails}
+                    onEdit={handleEdit}
+                    onStatusChange={handleStatusChange}
+                    onDelete={handleDelete}
+                  />
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
-      )}
+          )}
 
-      {/* Context Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => selectedRelationship && handleViewActivity(selectedRelationship.id)}>
-          <TimelineIcon sx={{ mr: 1 }} fontSize="small" />
-          View Activity
-        </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
-          <EditIcon sx={{ mr: 1 }} fontSize="small" />
-          Edit
-        </MenuItem>
-        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-          <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-          Delete
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Relationship?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete your relationship with{' '}
-            <strong>{selectedRelationship?.title}</strong>? This will remove all conversation
-            history and cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          {/* Detail Dialog */}
+          <RelationshipDetailDialog
+            relationship={selectedRelationship}
+            open={detailDialogOpen}
+            onClose={() => setDetailDialogOpen(false)}
+            onSave={handleSaveCustomization}
+            onDelete={handleDelete}
+          />
+        </Box>
+      </Fade>
+    </Container>
   );
 };
