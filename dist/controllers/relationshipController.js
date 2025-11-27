@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.switchActiveRelationship = exports.getRelationshipActivity = exports.deleteRelationship = exports.updateRelationship = exports.createRelationship = exports.getRelationshipById = exports.getUserRelationships = void 0;
 const zod_1 = require("zod");
-const prisma_1 = require("../servi-ces/prisma");
+const prisma_1 = require("../services/prisma");
 const logger_1 = require("../services/logger");
 const createRelationshipSchema = zod_1.z.object({
     roleTemplateId: zod_1.z.string(),
