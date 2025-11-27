@@ -12,7 +12,7 @@ const culturalSchema = zod_1.z.object({
     region: zod_1.z.string().min(2),
     settings: zod_1.z.record(zod_1.z.unknown()),
 });
-router.post('/', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['super_admin', 'config_manager']), (0, validator_1.validateBody)(culturalSchema), (req, res) => {
+router.post('/', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['SUPER_ADMIN', 'CONFIG_MANAGER']), (0, validator_1.validateBody)(culturalSchema), (req, res) => {
     const payload = req.body;
     const param = { id: (0, uuid_1.v4)(), ...payload };
     inMemoryStore_1.culturalParameters.push(param);

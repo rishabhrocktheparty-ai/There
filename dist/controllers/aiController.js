@@ -41,7 +41,6 @@ exports.testSafety = exports.searchConversation = exports.markMessageImportant =
 const zod_1 = require("zod");
 const aiResponseGenerator_1 = require("../services/aiResponseGenerator");
 const logger_1 = require("../services/logger");
-const logger_2 = require("../services/logger");
 // Validation schemas
 const generateResponseSchema = zod_1.z.object({
     relationshipId: zod_1.z.string().uuid(),
@@ -79,19 +78,13 @@ const generateResponse = async (req, res) => {
             userMessage: message,
             userId,
         });
-        // Log audit event
-        await (0, logger_2.logAuditEvent)({
+        // Log AI response generation for audit trail
+        logger_1.logger.info('AI response generated', {
             userId,
-            action: 'AI_RESPONSE_GENERATED',
-            resourceType: 'AI_MESSAGE',
-            resourceId: relationshipId,
-            details: {
-                emotionalTone: response.emotionalTone,
-                processingTime: response.metadata.processingTime,
-                safetyCheckPassed: response.metadata.safetyCheck.isSafe,
-            },
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent'),
+            relationshipId,
+            emotionalTone: response.emotionalTone,
+            processingTime: response.metadata.processingTime,
+            safetyCheckPassed: response.metadata.safetyCheck.isSafe,
         });
         res.json({
             success: true,
@@ -134,11 +127,14 @@ const getPersonality = async (req, res) => {
         if (!relationship) {
             return res.status(404).json({ error: 'Relationship not found' });
         }
-        const personality = aiPersonalityService.getPersonality(relationship.roleTemplate.roleType);
+        if (!relationship.roleTemplate) {
+            return res.status(404).json({ error: 'Role template not found' });
+        }
+        const personality = aiPersonalityService.getPersonality(relationship.roleTemplate.type);
         res.json({
             success: true,
             data: {
-                roleType: relationship.roleTemplate.roleType,
+                roleType: relationship.roleTemplate.type,
                 personality: {
                     name: personality?.name,
                     description: personality?.description,
@@ -229,14 +225,10 @@ const markMessageImportant = async (req, res) => {
         const { conversationMemoryService } = await Promise.resolve().then(() => __importStar(require('../services/conversationMemory')));
         // Mark message as important
         await conversationMemoryService.markAsImportant(messageId);
-        await (0, logger_2.logAuditEvent)({
+        // Log message marking for audit trail
+        logger_1.logger.info('Message marked as important', {
             userId,
-            action: 'MESSAGE_MARKED_IMPORTANT',
-            resourceType: 'MESSAGE',
-            resourceId: messageId,
-            details: {},
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent'),
+            messageId,
         });
         res.json({
             success: true,

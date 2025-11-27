@@ -79,9 +79,9 @@ class ConversationMemoryService {
             where: {
                 relationshipId,
                 OR: [
-                    { emotionalTone: client_1.EmotionalTone.JOYFUL },
-                    { emotionalTone: client_1.EmotionalTone.PROUD },
-                    { emotionalTone: client_1.EmotionalTone.SAD },
+                    { emotionalTone: client_1.EmotionalTone.POSITIVE },
+                    { emotionalTone: client_1.EmotionalTone.POSITIVE },
+                    { emotionalTone: client_1.EmotionalTone.POSITIVE },
                     { emotionalTone: client_1.EmotionalTone.GRATEFUL },
                     // Can add metadata filter for manually marked important messages
                 ],
@@ -310,7 +310,7 @@ class ConversationMemoryService {
         }
         // Analyze emotional patterns
         const recentEmotions = context.recentMessages.map((m) => m.emotionalTone);
-        const positiveCount = recentEmotions.filter((e) => [client_1.EmotionalTone.JOYFUL, client_1.EmotionalTone.HOPEFUL, client_1.EmotionalTone.GRATEFUL].includes(e)).length;
+        const positiveCount = recentEmotions.filter((e) => [client_1.EmotionalTone.POSITIVE, client_1.EmotionalTone.HOPEFUL, client_1.EmotionalTone.GRATEFUL].includes(e)).length;
         if (positiveCount > recentEmotions.length * 0.6) {
             traits.push('optimistic');
         }

@@ -43,7 +43,7 @@ const router = (0, express_1.Router)();
 router.get('/me', authMiddleware_1.authenticate, (req, res) => {
     res.json(req.user);
 });
-router.get('/audit-logs', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['super_admin']), (_req, res) => {
+router.get('/audit-logs', authMiddleware_1.authenticate, (0, authMiddleware_1.requireRole)(['SUPER_ADMIN']), (_req, res) => {
     res.json(inMemoryStore_1.auditLogs);
 });
 // New admin dashboard routes
