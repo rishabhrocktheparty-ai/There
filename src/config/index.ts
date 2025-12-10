@@ -27,6 +27,7 @@ const envSchema = z.object({
   // External APIs
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
 
   // Monitoring
   SENTRY_DSN: z.string().optional(),
@@ -75,7 +76,14 @@ const loadConfig = (): EnvConfig => {
 };
 
 // Configuration instance
-export const config = loadConfig();
+const rawConfig = loadConfig();
+
+export const config = {
+  ...rawConfig,
+  gemini: {
+    apiKey: rawConfig.GEMINI_API_KEY,
+  },
+};
 
 // Environment-specific configurations
 export const isDevelopment = config.NODE_ENV === 'development';
@@ -187,4 +195,12 @@ export const socialAuthConfig = {
     appId: config.FACEBOOK_APP_ID,
     appSecret: config.FACEBOOK_APP_SECRET,
   },
+};
+
+// Gemini AI configuration
+export const geminiConfig = {
+  apiKey: config.GEMINI_API_KEY,
+  model: 'gemini-1.5-flash',
+  maxTokens: 1000,
+  temperature: 0.7,
 };

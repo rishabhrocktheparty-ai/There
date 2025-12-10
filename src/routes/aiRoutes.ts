@@ -1,11 +1,13 @@
 /**
- * AI Response Routes
- * API endpoints for AI response generation and analysis
+ * AI Response Routes - Gemini Integration
+ * API endpoints for AI response generation using Google Gemini
  */
 
 import { Router } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
-import * as aiController from '../controllers/aiController';
+import * as aiControllerSimple from '../controllers/aiControllerSimple';
+// Legacy controller with type issues commented out
+// import * as aiController from '../controllers/aiController';
 
 const router = Router();
 
@@ -13,47 +15,28 @@ const router = Router();
 router.use(authenticate);
 
 /**
- * Generate AI response
+ * Generate AI response using Gemini
  * POST /api/ai/generate
  * Body: { relationshipId: string, message: string }
  */
-router.post('/generate', aiController.generateResponse);
+router.post('/generate', aiControllerSimple.generateResponse);
 
 /**
  * Get AI personality for relationship
  * GET /api/ai/personality/:relationshipId
  */
-router.get('/personality/:relationshipId', aiController.getPersonality);
+router.get('/personality/:relationshipId', aiControllerSimple.getPersonality);
 
 /**
- * Get emotional analysis of conversation
+ * Get emotional patterns for relationship
  * GET /api/ai/emotions/:relationshipId
  */
-router.get('/emotions/:relationshipId', aiController.getEmotionalAnalysis);
+router.get('/emotions/:relationshipId', aiControllerSimple.getEmotions);
 
-/**
- * Get conversation memory summary
- * GET /api/ai/memory/:relationshipId
- */
-router.get('/memory/:relationshipId', aiController.getMemorySummary);
-
-/**
- * Mark message as important
- * POST /api/ai/mark-important/:messageId
- */
-router.post('/mark-important/:messageId', aiController.markMessageImportant);
-
-/**
- * Search conversation history
- * GET /api/ai/search/:relationshipId?q=query&limit=10
- */
-router.get('/search/:relationshipId', aiController.searchConversation);
-
-/**
- * Test safety filters (admin only - add admin middleware as needed)
- * POST /api/ai/test-safety
- * Body: { content: string, context: 'user_input' | 'ai_response' }
- */
-router.post('/test-safety', aiController.testSafety);
+// Legacy routes commented out due to type incompatibilities
+// router.get('/memory/:relationshipId', aiController.getMemorySummary);
+// router.post('/mark-important/:messageId', aiController.markMessageImportant);
+// router.get('/search/:relationshipId', aiController.searchConversation);
+// router.post('/test-safety', aiController.testSafety);
 
 export default router;
